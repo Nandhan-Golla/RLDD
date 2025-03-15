@@ -1,5 +1,5 @@
-import gym
-from gym import spaces
+import gymnasium as gym
+from gymnasium import spaces
 import numpy as np
 import torch
 from transformers import BertTokenizer, BertModel
@@ -11,13 +11,12 @@ from stable_baselines3.common.env_checker import check_env
 from tdc.single_pred import ADME
 import os
 
-
 class SimulatedPatientData:
     def __init__(self, num_patients=10):
         self.num_patients = num_patients
         self.blood_reports = [f"Patient {i}: Hemoglobin: {np.random.uniform(10, 15):.1f} g/dL, Glucose: {np.random.uniform(70, 120):.1f} mg/dL" for i in range(num_patients)]
-        self.protein_scans = [f"protein_scan_{i}.jpg" for i in range(num_patients)] 
-        self.drug_responses = np.random.rand(num_patients, 10) 
+        self.protein_scans = [f"protein_scan_{i}.jpg" for i in range(num_patients)]
+        self.drug_responses = np.random.rand(num_patients, 10)
 
     def get_patient_data(self, idx):
         return self.blood_reports[idx], self.protein_scans[idx], self.drug_responses[idx]
@@ -55,69 +54,73 @@ class DataPipeline:
             features = self.resnet(input_tensor)
         return features.squeeze().numpy()
 
+
 class PatientDrugEnv(gym.Env):
     def __init__(self, patient_data):
         super(PatientDrugEnv, self).__init__()
         self.patient_data = patient_data
         self.pipeline = DataPipeline()
         self.num_drugs = 10
-        self.state_dim = 770 
+        self.state_dim = 772
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(self.state_dim,), dtype=np.float32)
         self.action_space = spaces.Discrete(self.num_drugs)
         self.current_patient_idx = None
 
-    def reset(self):
+    def reset(self, seed=None, options=None):
+        if seed is not None:
+            np.random.seed(seed)
         self.current_patient_idx = np.random.randint(self.patient_data.num_patients)
         blood_report, protein_scan, _ = self.patient_data.get_patient_data(self.current_patient_idx)
         blood_features = self.pipeline.process_blood_report(blood_report)
         protein_features = self.pipeline.process_protein_scan(protein_scan)
-        self.state = np.concatenate([blood_features, protein_features[-2:]])
-        return self.state
+        self.state = np.concatenate([blood_features, protein_features[-2:]]).astype(np.float32)  
+        info = {"patient_idx": self.current_patient_idx}
+        return self.state, info
 
     def step(self, action):
         _, _, drug_responses = self.patient_data.get_patient_data(self.current_patient_idx)
         reward = drug_responses[action]
         next_state = self.state
-        done = True
+        terminated = True
+        truncated = False
         info = {}
-        return next_state, reward, done, info
+        return next_state, reward, terminated, truncated, info
 
     def render(self, mode='human'):
         print(f"Patient {self.current_patient_idx}: State {self.state[:5]}...")
-
 def load_tdc_data():
     data = ADME(name='Caco2_Wang')
     drug_smiles = data.get_data()['Drug'].tolist()
     return drug_smiles[:10]
 
+
 if __name__ == "__main__":
     patient_data = SimulatedPatientData(num_patients=10)
     drug_list = load_tdc_data()
     print(f"Loaded {len(drug_list)} drugs from TDC: {drug_list[:2]}...")
-
     env = PatientDrugEnv(patient_data)
     check_env(env)
+
     model = PPO("MlpPolicy", env, verbose=1, learning_rate=0.0003, n_steps=2048)
     print("Training RL model...")
     model.learn(total_timesteps=10000)
     model.save("ppo_drug_discovery")
+
     new_blood_report = "Patient Test: Hemoglobin: 14.2 g/dL, Glucose: 95.3 mg/dL"
-    new_protein_scan = "test_protein_scan.jpg" 
+    new_protein_scan = "test_protein_scan.jpg"
     pipeline = DataPipeline()
     blood_features = pipeline.process_blood_report(new_blood_report)
     protein_features = pipeline.process_protein_scan(new_protein_scan)
-    new_state = np.concatenate([blood_features, protein_features[-2:]])
-
+    new_state = np.concatenate([blood_features, protein_features[-2:]]).astype(np.float32)
 
     model = PPO.load("ppo_drug_discovery")
     action, _ = model.predict(new_state, deterministic=True)
     recommended_drug = drug_list[action]
     print(f"Recommended drug for new patient: {recommended_drug}")
-
     total_reward = 0
     for _ in range(5):
-        obs = env.reset()
+        obs, info = env.reset()
         action, _ = model.predict(obs)
-        _, reward, _, _ = env.step(action)
+        _, reward, _, _, _ = env.step(action)
         total_reward += reward
     print(f"Average reward over 5 test episodes: {total_reward / 5:.2f}")
