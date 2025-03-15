@@ -16,8 +16,8 @@ class SimulatedPatientData:
     def __init__(self, num_patients=10):
         self.num_patients = num_patients
         self.blood_reports = [f"Patient {i}: Hemoglobin: {np.random.uniform(10, 15):.1f} g/dL, Glucose: {np.random.uniform(70, 120):.1f} mg/dL" for i in range(num_patients)]
-        self.protein_scans = [f"protein_scan_{i}.jpg" for i in range(num_patients)]  # Placeholder paths
-        self.drug_responses = np.random.rand(num_patients, 10)  # Simulated responses to 10 drugs
+        self.protein_scans = [f"protein_scan_{i}.jpg" for i in range(num_patients)] 
+        self.drug_responses = np.random.rand(num_patients, 10) 
 
     def get_patient_data(self, idx):
         return self.blood_reports[idx], self.protein_scans[idx], self.drug_responses[idx]
