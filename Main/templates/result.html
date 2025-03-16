@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Prediction Result</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background-color: #f4f4f4; }
+        h1 { color: #333; }
+        .container { max-width: 800px; margin: auto; padding: 20px; background: white; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        img { max-width: 100%; margin-top: 20px; }
+        p { margin: 10px 0; }
+        a { color: #4CAF50; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Prediction Result</h1>
+        <h2>Treatment Steps</h2>
+        {% for step in steps %}
+            <p>{{ step }}</p>
+        {% endfor %}
+        <h2>Recommended Drug</h2>
+        <p><strong>SMILES:</strong> {{ smiles }}</p>
+        <p><strong>Name:</strong> {{ drug_name }}</p>
+        <p><strong>Formula:</strong> {{ formula }}</p>
+        <p><strong>Confidence:</strong> {{ confidence }}</p>
+        <h2>Patient Trajectory</h2>
+        <img src="{{ plot_url }}" alt="Patient Trajectory">
+        <p><a href="{{ url_for('upload_file') }}">Upload Another File</a></p>
+    </div>
+</body>
+</html>
