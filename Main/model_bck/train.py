@@ -47,9 +47,9 @@ class CustomFeatureExtractor(BaseFeaturesExtractor):
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
         self.transformer = nn.TransformerEncoder(
-            nn.TransformerEncoderLayer(d_model=770, nhead=5, dim_feedforward=512), num_layers=2
+            nn.TransformerEncoderLayer(d_model=774, nhead=6, dim_feedforward=512), num_layers=2
         ).to(device)
-        self.fc = nn.Linear(770, 256).to(device)
+        self.fc = nn.Linear(774, 256).to(device)
 
     def forward(self, observations):
         batch_size = observations.shape[0]
@@ -58,10 +58,9 @@ class CustomFeatureExtractor(BaseFeaturesExtractor):
         img = Image.fromarray(np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8))
         img_tensor = self.image_transform(img).unsqueeze(0).to(device).repeat(batch_size, 1, 1, 1)
         with torch.no_grad():
-            img_features = self.resnet(img_tensor).reshape(batch_size, 1, -1)[:, :, -2:]
-        combined = torch.cat((bert_input, extra_features.unsqueeze(1), img_features), dim=2)
-        with torch.no_grad():
-            transformer_out = self.transformer(combined.transpose(0, 1)).transpose(0, 1)
+            img_features = self.resnet(img_tensor).reshape(batch_size, 1, -1)[:, :, -2:] 
+        combined = torch.cat((bert_input, extra_features.unsqueeze(1), img_features), dim=2) 
+        transformer_out = self.transformer(combined.transpose(0, 1)).transpose(0, 1)
         return self.fc(transformer_out.squeeze(1))
 
 class PatientDrugEnv(gym.Env):
@@ -131,22 +130,23 @@ class DataPipeline:
         with torch.no_grad():
             outputs = self.bert_model(**inputs)
         return outputs.pooler_output.squeeze().cpu().numpy()
+
 def load_tdc_data():
     data = ADME(name='Caco2_Wang')
     return data.get_data()['Drug'].tolist()[:20]
 
-
 if __name__ == "__main__":
-
     patient_data = SimulatedPatientData(num_patients=100)
     drug_list = load_tdc_data()
     print(f"Loaded {len(drug_list)} drugs from TDC: {drug_list[:2]}...")
 
     env = PatientDrugEnv(patient_data)
     check_env(env)
+
+
     policy_kwargs = dict(features_extractor_class=CustomFeatureExtractor, features_extractor_kwargs=dict())
     model = PPO("MultiInputPolicy", env, verbose=1, learning_rate=0.0001, n_steps=2048, batch_size=64, n_epochs=10, device=device, policy_kwargs=policy_kwargs)
     print("Training LUMINARIX model on GPU...")
     model.learn(total_timesteps=100000)
-    model.save("atherix_advanced")
-    print("Model saved as 'atherix_advanced.zip'")
+    model.save("cgnvx_advanced")
+    print("Model saved as 'ppo_luminarix_advanced.zip'")
