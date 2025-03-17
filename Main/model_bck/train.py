@@ -148,5 +148,5 @@ if __name__ == "__main__":
     model = PPO("MultiInputPolicy", env, verbose=1, learning_rate=0.0001, n_steps=2048, batch_size=64, n_epochs=10, device=device, policy_kwargs=policy_kwargs)
     print("Training LUMINARIX model on GPU...")
     model.learn(total_timesteps=100000)
-    model.save("ppo_luminarix_advanced")
+    model.save("atherix_advanced")
     print("Model saved as 'atherix_advanced.zip'")
