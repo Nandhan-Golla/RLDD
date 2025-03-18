@@ -11,7 +11,18 @@ from io import BytesIO
 import base64
 import logging
 import requests
+
 import pubchempy as pcp
+from rdkit import Chem
+from rdkit.Chem import rdMolDescriptors
+
+def decode_smiles(smiles):
+    mol = Chem.MolFromSmiles(smiles)
+    mol_formula = rdMolDescriptors.CalcMolFormula(mol)
+    compounds = pcp.get_compounds(smiles, 'smiles')
+    drug_name = compounds[0].iupac_name if compounds else "Unknown"
+    return drug_name, mol_formula
+
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -242,18 +253,20 @@ def report():
     drug_structure_plot, drug_name = plot_drug_structure(drug_list[final_action], drug_names[final_action])
     final_smiles = drug_list[final_action]
     
+    #drug = drug_name
+    #final_smiles = "COc1ccc2c3c1O[C@H]1[C@@H](O)C=C[C@H]4[C@@H](C2)N(C)CC[C@]314"
     return render_template('report.html', 
                           trajectory_plot=trajectory_plot, 
                           drug_plot=drug_plot, 
                           drug_structure_plot=drug_structure_plot, 
-                          drug=drug_name, 
+                          drug= drug_name, 
                           smiles=final_smiles,
                           history=latest_history,
                           rewards=latest_rewards)
 
 @app.route('/result/<int:action>/<drug>/<smiles>')
 def result(action, drug, smiles):
-    return render_template('result.html', action=action, drug=drug, smiles=smiles)
+    return render_template('result.html', action=action, drug=decode_smiles(smiles)[0], _drug_ = drug ,smiles=smiles)
 
 @app.route('/download_trajectory')
 def download_trajectory():
