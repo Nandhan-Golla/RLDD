@@ -18,6 +18,18 @@ import matplotlib.animation as animation
 import random
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+import pubchempy as pcp
+from rdkit import Chem
+from rdkit.Chem import rdMolDescriptors
+
+def decode_smiles(smiles):
+    mol = Chem.MolFromSmiles(smiles)
+    mol_formula = rdMolDescriptors.CalcMolFormula(mol)
+    compounds = pcp.get_compounds(smiles, 'smiles')
+    drug_name = compounds[0].iupac_name if compounds else "Unknown"
+    return drug_name, mol_formula
+
+
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -405,10 +417,11 @@ def report():
                           current_meds=latest_meds)
 
 @app.route('/result/<int:action>/<drug>/<smiles>')
+#drug_name, mol_formula = decode_smiles(recommended_drug)
 def result(action, drug, smiles):
     global latest_history, latest_rewards
     _, static_plot = plot_trajectory(latest_history, latest_rewards)
-    return render_template('result.html', action=action, drug=drug, smiles=smiles, static_plot=static_plot)
+    return render_template('result.html', action=action, drug=drug, smiles=smiles,_drug_ = decode_smiles(smiles)[0], static_plot=static_plot)
 
 @app.route('/download_trajectory')
 def download_trajectory():
