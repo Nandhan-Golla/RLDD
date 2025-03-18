@@ -4,8 +4,19 @@
     <div class="card">
         <h1>Data Visualization</h1>
         <h2>Drug Effects Comparison</h2>
-        <img src="data:image/png;base64,{{ drug_plot }}" alt="Drug Effects">
+        {% if drug_plot %}
+            <img src="data:image/png;base64,{{ drug_plot }}" alt="Drug Effects">
+        {% else %}
+            <p>Drug effects plot unavailable.</p>
+        {% endif %}
+        <h2>3D Structure of Recommended Drug: {{ drug_name }}</h2>
+        {% if drug_structure_plot %}
+            <img src="data:image/png;base64,{{ drug_structure_plot }}" alt="Drug Structure Plot">
+        {% else %}
+            <p>No 3D structure available for {{ drug_name }}.</p>
+        {% endif %}
         <p><a href="{{ url_for('download_drug_effects') }}" class="button">Download Drug Effects Plot</a></p>
-        <p>Explore how different drugs affect biomarkers.</p>
+        <p><a href="{{ url_for('download_drug_structure') }}" class="button">Download Drug Structure Plot</a></p>
+        <p>Explore drug impacts and molecular structures.</p>
     </div>
 {% endblock %}

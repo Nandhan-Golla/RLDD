@@ -1,42 +1,124 @@
 {% extends "base.html" %}
 {% block title %}Treatment Report - LUMINARIX{% endblock %}
 {% block content %}
-    <h1>LUMINARIX Treatment Report</h1>
-    <p><strong>Recommended Drug:</strong> {{ drug }}</p>
-    <p><strong>SMILES:</strong> {{ smiles }}</p>
-    
-    <h2>Treatment Trajectory</h2>
-    <img src="data:image/png;base64,{{ trajectory_plot }}" alt="Trajectory Plot">
-    
-    <h2>Drug Effects Comparison</h2>
-    <img src="data:image/png;base64,{{ drug_plot }}" alt="Drug Effects Plot">
-    
-    <h2>3D Structure of Recommended Drug: {{ drug }}</h2>
-    {% if drug_structure_plot %}
-        <img src="data:image/png;base64,{{ drug_structure_plot }}" alt="Drug Structure Plot">
-    {% else %}
-        <p>No 3D structure available for {{ drug }}.</p>
-    {% endif %}
-    
-    <h2>Treatment Details</h2>
-    <table>
-        <tr><th>Step</th><th>Hemoglobin (g/dL)</th><th>Glucose (mg/dL)</th><th>Reward</th></tr>
-        {% if history and rewards %}
-            {% for i in range(history|length) %}
-                <tr>
-                    <td>{{ i+1 }}</td>
-                    <td>{{ (history[i][0] if history[i][0] is not none else 0)|round(1) }}</td>
-                    <td>{{ (history[i][1] if history[i][1] is not none else 0)|round(1) }}</td>
-                    <td>{{ (rewards[i] if rewards[i] is not none else 0)|round(2) }}</td>
-                </tr>
-            {% endfor %}
+    <div class="card">
+        <h1>LUMINARIX Treatment Report</h1>
+        <p><strong>Recommended Drug:</strong> {{ drug }}</p>
+        <p><strong>SMILES:</strong> {{ smiles }}</p>
+        
+        <h2>Treatment Trajectory (Animated)</h2>
+        <img src="data:image/gif;base64,{{ trajectory_gif }}" alt="Trajectory GIF">
+        <h3>Fallback Static Plot (if GIF fails)</h3>
+        <img src="data:image/png;base64,{{ static_plot }}" alt="Static Trajectory Plot">
+        
+        <h2>Drug Effects Comparison</h2>
+        {% if drug_plot %}
+            <img src="data:image/png;base64,{{ drug_plot }}" alt="Drug Effects Plot">
         {% else %}
-            <tr><td colspan="4">No data available</td></tr>
+            <p>Drug effects plot unavailable.</p>
         {% endif %}
-    </table>
-    
-    <p><a href="{{ url_for('download_trajectory') }}">Download Trajectory Plot</a></p>
-    <p><a href="{{ url_for('download_drug_effects') }}">Download Drug Effects Plot</a></p>
-    <p><a href="{{ url_for('download_drug_structure') }}">Download Drug Structure Plot</a></p>
-    <p><a href="{{ url_for('upload_file') }}">Analyze Another</a></p>
+        
+        <h2>3D Structure of Recommended Drug: {{ drug }}</h2>
+        {% if drug_structure_plot %}
+            <img src="data:image/png;base64,{{ drug_structure_plot }}" alt="Drug Structure Plot">
+        {% else %}
+            <p>No 3D structure available for {{ drug }}.</p>
+        {% endif %}
+        
+        <h2>Treatment Details</h2>
+        <table>
+            <tr><th>Step</th><th>Hemoglobin (g/dL)</th><th>Glucose (mg/dL)</th><th>Reward</th></tr>
+            {% if history and rewards %}
+                {% for i in range(history|length) %}
+                    <tr>
+                        <td>{{ i+1 }}</td>
+                        <td>{{ (history[i][0] if history[i][0] is not none else 0)|round(1) }}</td>
+                        <td>{{ (history[i][1] if history[i][1] is not none else 0)|round(1) }}</td>
+                        <td>{{ (rewards[i] if i < rewards|length and rewards[i] is not none else 0)|round(2) }}</td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr><td colspan="4">No data available</td></tr>
+            {% endif %}
+        </table>
+        
+        <h2>Predicted Conditions</h2>
+        {% if conditions %}
+            <ul>
+                {% for condition in conditions %}
+                    <li>{{ condition }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No conditions predicted.</p>
+        {% endif %}
+        
+        <h2>Drug Interaction Warnings</h2>
+        {% if interactions %}
+            <p><strong>Caution:</strong> {{ drug }} may interact with: {{ interactions|join(', ') }}</p>
+        {% else %}
+            <p>No known interactions detected.</p>
+        {% endif %}
+        
+        <h2>Real-Time Insights</h2>
+        {% if insights %}
+            <ul>
+                {% for insight in insights %}
+                    <li>{{ insight }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No insights available.</p>
+        {% endif %}
+
+        <!-- New Features -->
+        <h2>AI-Powered Symptom Checker</h2>
+        <form method="post">
+            <label for="symptoms">Enter Symptoms (comma-separated):</label>
+            <input type="text" id="symptoms" name="symptoms" value="{{ symptoms }}" placeholder="e.g., fever, fatigue">
+            <button type="submit" class="button">Check My Symptoms</button>
+        </form>
+        {% if symptom_results %}
+            <ul>
+                {% for result in symptom_results %}
+                    <li>{{ result }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <h2>Personalized Dosage Calculator</h2>
+        <form method="post">
+            <button type="submit" name="calculate_dosage" value="true" class="button">Calculate Dosage</button>
+        </form>
+        {% if dosage %}
+            <p>{{ dosage }}</p>
+        {% endif %}
+
+        <h2>Real-Time Drug Interaction Alerts</h2>
+        <form method="post">
+            <label for="current_meds">Enter Current Medications (comma-separated):</label>
+            <input type="text" id="current_meds" name="current_meds" value="{{ current_meds }}" placeholder="e.g., Aspirin, Metformin">
+            <button type="submit" class="button">Check Interactions</button>
+        </form>
+        {% if interaction_alerts %}
+            <ul>
+                {% for alert in interaction_alerts %}
+                    <li>{{ alert }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <h2>Export Options</h2>
+        <p><a href="{{ url_for('download_timeline') }}" class="button">Export Timeline</a></p>
+
+        <h2>Voice Command Interface (Simulated)</h2>
+        <p>Try saying: "Show report" (simulated as button for now)</p>
+        <button onclick="alert('Voice command simulated: Report displayed')" class="button">Voice Commands</button>
+
+        <!-- Existing Buttons -->
+        <p><a href="{{ url_for('download_trajectory') }}" class="button">Download Trajectory GIF</a></p>
+        <p><a href="{{ url_for('download_drug_effects') }}" class="button">Download Drug Effects Plot</a></p>
+        <p><a href="{{ url_for('download_drug_structure') }}" class="button">Download Drug Structure Plot</a></p>
+        <p><a href="{{ url_for('upload_file') }}" class="button">Analyze Another</a></p>
+    </div>
 {% endblock %}
