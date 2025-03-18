@@ -13,10 +13,17 @@ from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 from tdc.single_pred import ADME
 import os
 from collections import deque
+import logging
 
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+# Set device to GPU if available
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"Using device: {device}")
+logger.info(f"Using device: {device}")
 
+# Simulated dataset
 class SimulatedPatientData:
     def __init__(self, num_patients=100):
         self.num_patients = num_patients
@@ -33,6 +40,7 @@ class SimulatedPatientData:
     def get_patient_data(self, idx):
         return self.blood_reports[idx], self.protein_scans[idx], self.drug_effects
 
+# Custom feature extractor
 class CustomFeatureExtractor(BaseFeaturesExtractor):
     def __init__(self, observation_space: gym.Space):
         super(CustomFeatureExtractor, self).__init__(observation_space, features_dim=256)
@@ -58,11 +66,12 @@ class CustomFeatureExtractor(BaseFeaturesExtractor):
         img = Image.fromarray(np.random.randint(0, 255, (224, 224, 3), dtype=np.uint8))
         img_tensor = self.image_transform(img).unsqueeze(0).to(device).repeat(batch_size, 1, 1, 1)
         with torch.no_grad():
-            img_features = self.resnet(img_tensor).reshape(batch_size, 1, -1)[:, :, -2:] 
-        combined = torch.cat((bert_input, extra_features.unsqueeze(1), img_features), dim=2) 
+            img_features = self.resnet(img_tensor).reshape(batch_size, 1, -1)[:, :, -2:]
+        combined = torch.cat((bert_input, extra_features.unsqueeze(1), img_features), dim=2)
         transformer_out = self.transformer(combined.transpose(0, 1)).transpose(0, 1)
         return self.fc(transformer_out.squeeze(1))
 
+# RL environment
 class PatientDrugEnv(gym.Env):
     def __init__(self, patient_data):
         super(PatientDrugEnv, self).__init__()
@@ -118,6 +127,7 @@ class PatientDrugEnv(gym.Env):
         info = {"new_hemoglobin": self.current_hemoglobin, "new_glucose": self.current_glucose, "side_effect": side_effect}
         return self.state, reward, terminated, truncated, info
 
+# Data pipeline
 class DataPipeline:
     def __init__(self):
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -131,22 +141,34 @@ class DataPipeline:
             outputs = self.bert_model(**inputs)
         return outputs.pooler_output.squeeze().cpu().numpy()
 
+# Load TDC dataset
 def load_tdc_data():
     data = ADME(name='Caco2_Wang')
     return data.get_data()['Drug'].tolist()[:20]
 
+# Main training execution
 if __name__ == "__main__":
-    patient_data = SimulatedPatientData(num_patients=100)
-    drug_list = load_tdc_data()
-    print(f"Loaded {len(drug_list)} drugs from TDC: {drug_list[:2]}...")
+    try:
+        # Initialize data and drugs
+        patient_data = SimulatedPatientData(num_patients=100)
+        drug_list = load_tdc_data()
+        logger.info(f"Loaded {len(drug_list)} drugs from TDC: {drug_list[:2]}...")
 
-    env = PatientDrugEnv(patient_data)
-    check_env(env)
+        # Create and check environment
+        env = PatientDrugEnv(patient_data)
+        logger.info("Checking environment...")
+        check_env(env)
+        logger.info("Environment check passed.")
 
-
-    policy_kwargs = dict(features_extractor_class=CustomFeatureExtractor, features_extractor_kwargs=dict())
-    model = PPO("MultiInputPolicy", env, verbose=1, learning_rate=0.0001, n_steps=2048, batch_size=64, n_epochs=10, device=device, policy_kwargs=policy_kwargs)
-    print("Training LUMINARIX model on GPU...")
-    model.learn(total_timesteps=100000)
-    model.save("cgnvx_advanced")
-    print("Model saved as 'ppo_luminarix_advanced.zip'")
+        # Train and export model
+        policy_kwargs = dict(features_extractor_class=CustomFeatureExtractor, features_extractor_kwargs=dict())
+        logger.info("Initializing PPO model...")
+        model = PPO("MultiInputPolicy", env, verbose=1, learning_rate=0.0001, n_steps=2048, batch_size=64, n_epochs=10, device=device, policy_kwargs=policy_kwargs)
+        logger.info("Training LUMINARIX model on GPU...")
+        model.learn(total_timesteps=100000)
+        logger.info("Training completed. Saving model...")
+        model.save("ppo_luminarix_advanced.zip")
+        logger.info("Model saved as 'ppo_luminarix_advanced.zip'")
+    except Exception as e:
+        logger.error(f"Error during training: {str(e)}", exc_info=True)
+        raise
