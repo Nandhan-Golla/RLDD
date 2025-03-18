@@ -13,7 +13,6 @@ import logging
 import requests
 import pubchempy as pcp
 
-# Logging setup
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -29,8 +28,6 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['STATIC_FOLDER'] = STATIC_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(STATIC_FOLDER, exist_ok=True)
-
-# Simple policy network (must match training script)
 class SimplePolicy(nn.Module):
     def __init__(self, input_dim=4, output_dim=20):
         super(SimplePolicy, self).__init__()
@@ -44,8 +41,6 @@ class SimplePolicy(nn.Module):
 
     def forward(self, x):
         return self.net(x)
-
-# Load pre-trained policy and PyTDC data
 MODEL_PATH = "simple_policy.pth"
 DRUG_LIST_PATH = "drug_list.npy"
 DRUG_EFFECTS_PATH = "drug_effects.npy"
@@ -69,12 +64,10 @@ except Exception as e:
     logger.error(f"Failed to load {MODEL_PATH}: {str(e)}", exc_info=True)
     raise
 
-# Ensure drug_names matches drug_list length
 if len(drug_names) != num_drugs:
     logger.error(f"Drug names count ({len(drug_names)}) does not match drug list count ({num_drugs})")
     raise ValueError("Mismatch between drug_names.txt and drug_list.npy")
 
-# Data pipeline
 class DataPipeline:
     def extract_patient_data(self, file_path):
         with open(file_path, 'r') as f:
@@ -160,7 +153,6 @@ def plot_drug_effects():
 
 def plot_drug_structure(smiles, drug_name):
     try:
-        # Fetch 3D structure from PubChem
         compounds = pcp.get_compounds(smiles, 'smiles', record_type='3d')
         if not compounds or not hasattr(compounds[0], 'coords'):
             logger.warning(f"No 3D structure available for {drug_name} ({smiles})")
@@ -171,7 +163,7 @@ def plot_drug_structure(smiles, drug_name):
         for atom in compound.coords:
             x.append(atom['x'])
             y.append(atom['y'])
-            z.append(atom['z'] if 'z' in atom else 0.0)  # Some may lack z-coordinate
+            z.append(atom['z'] if 'z' in atom else 0.0) 
         
         fig = plt.figure(figsize=(10, 8))
         ax = fig.add_subplot(111, projection='3d')
@@ -190,7 +182,6 @@ def plot_drug_structure(smiles, drug_name):
         logger.error(f"Error in plot_drug_structure: {str(e)}", exc_info=True)
         return None, drug_name
 
-# Global variables to store latest simulation results
 latest_state = None
 latest_history = None
 latest_rewards = None
