@@ -15,15 +15,12 @@ from werkzeug.utils import secure_filename
 import logging
 from torchvision import models, transforms
 
-# Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Force CPU explicitly
 device = torch.device("cpu")
 logger.info(f"Using device: {device}")
 
-# Flask app setup
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 UPLOAD_FOLDER = 'uploads'
@@ -31,19 +28,17 @@ ALLOWED_EXTENSIONS = {'txt', 'pdf'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Custom feature extractor (simplified for debugging)
 class CustomFeatureExtractor(BaseFeaturesExtractor):
     def __init__(self, observation_space):
         super(CustomFeatureExtractor, self).__init__(observation_space, features_dim=256)
         try:
             logger.info("Initializing CustomFeatureExtractor...")
-            # Load BERT without pre-trained weights as a fallback
             self.bert = BertModel.from_pretrained('bert-base-uncased', local_files_only=False).to(device)
             self.bert.eval()
             logger.info("BERT initialized.")
             self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
             logger.info("Tokenizer initialized.")
-            # Load ResNet without pre-trained weights as a fallback
+           
             self.resnet = models.resnet18(pretrained=False).to(device)
             self.resnet.fc = torch.nn.Identity()
             self.resnet.eval()
@@ -53,7 +48,6 @@ class CustomFeatureExtractor(BaseFeaturesExtractor):
                 transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
             ])
             logger.info("Image transform initialized.")
-            # Transformer initialization (where error likely occurs)
             self.transformer = torch.nn.TransformerEncoder(
                 torch.nn.TransformerEncoderLayer(d_model=774, nhead=6, dim_feedforward=512), num_layers=2
             ).to(device)
@@ -69,7 +63,7 @@ class CustomFeatureExtractor(BaseFeaturesExtractor):
             batch_size = observations.shape[0]
             bert_input = observations[:, :-4].reshape(batch_size, 1, 768)
             extra_features = observations[:, -4:].to(device)
-            img = torch.zeros(224, 224, 3, dtype=torch.uint8)  # Placeholder image
+            img = torch.zeros(224, 224, 3, dtype=torch.uint8)
             img_tensor = self.image_transform(img).unsqueeze(0).to(device).repeat(batch_size, 1, 1, 1)
             with torch.no_grad():
                 img_features = self.resnet(img_tensor).reshape(batch_size, 1, -1)[:, :, -2:]
@@ -80,7 +74,6 @@ class CustomFeatureExtractor(BaseFeaturesExtractor):
             logger.error(f"Error in CustomFeatureExtractor forward: {str(e)}", exc_info=True)
             raise
 
-# Data pipeline
 class DataPipeline:
     def __init__(self):
         self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -121,7 +114,6 @@ class DataPipeline:
         else:
             raise ValueError("Unsupported file format. Use .txt or .pdf")
 
-# Load TDC dataset
 def load_tdc_data():
     return [
         "CCO", "CCN", "CCC", "C=O", "C#N", "CC=O", "CC#N", "COC", "CCOC", "CN",
@@ -129,7 +121,6 @@ def load_tdc_data():
         "CN(C)C", "CCN(C)C"
     ]
 
-# Decode SMILES with confidence
 def decode_smiles(smiles, model, state):
     mol = Chem.MolFromSmiles(smiles)
     mol_formula = rdMolDescriptors.CalcMolFormula(mol) if mol else "Invalid SMILES"
@@ -139,8 +130,6 @@ def decode_smiles(smiles, model, state):
         logits, _ = model.policy.predict_values(torch.tensor(state, dtype=torch.float32).unsqueeze(0).to(device))
         confidence = torch.softmax(logits, dim=-1).max().item()
     return drug_name, mol_formula, confidence
-
-# Visualization
 def plot_patient_trajectory(history, rewards, filename="static/patient_trajectory.png"):
     hgb_history, glu_history = zip(*history)
     plt.figure(figsize=(10, 6))
@@ -159,7 +148,6 @@ def plot_patient_trajectory(history, rewards, filename="static/patient_trajector
     plt.savefig(filename)
     plt.close()
 
-# Flask routes
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
