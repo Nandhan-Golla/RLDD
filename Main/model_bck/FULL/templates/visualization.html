@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Visualization - LUMINARIX{% endblock %}
+{% block content %}
+    <div class="card">
+        <h1>Data Visualization</h1>
+        <h2>Drug Effects Comparison</h2>
+        <img src="data:image/png;base64,{{ drug_plot }}" alt="Drug Effects">
+        <p><a href="{{ url_for('download_drug_effects') }}" class="button">Download Drug Effects Plot</a></p>
+        <p>Explore how different drugs affect biomarkers.</p>
+    </div>
+{% endblock %}

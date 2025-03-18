@@ -1,0 +1,5 @@
+Patient Blood Report
+Hemoglobin: 11.5 g/dL  # Low, should trigger hemoglobin (2MHR)
+Glucose: 130.0 mg/dL   # High, should trigger insulin (1INS) if not overridden
+Age: 45
+Weight: 70.0 kg

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Upload - LUMINARIX{% endblock %}
+{% block content %}
+    <div class="card">
+        <h2>Upload Patient Report</h2>
+        <form method="post" enctype="multipart/form-data">
+            <input type="file" name="file" accept=".txt,.pdf" required>
+            <button type="submit">Analyze</button>
+        </form>
+        <p>Upload a patient report in TXT or PDF format containing Hemoglobin, Glucose, Age, and Weight.</p>
+    </div>
+{% endblock %}

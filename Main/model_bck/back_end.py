@@ -3,6 +3,7 @@ import torch
 from transformers import BertTokenizer, BertModel
 import re
 from stable_baselines3 import PPO
+from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 import os
 from rdkit import Chem
 from rdkit.Chem import rdMolDescriptors
@@ -12,13 +13,14 @@ import PyPDF2
 from flask import Flask, request, render_template, send_file, flash, redirect, url_for
 from werkzeug.utils import secure_filename
 import logging
+from torchvision import models, transforms
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Set device to GPU if available
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# Force CPU explicitly
+device = torch.device("cpu")
 logger.info(f"Using device: {device}")
 
 # Flask app setup
@@ -29,28 +31,68 @@ ALLOWED_EXTENSIONS = {'txt', 'pdf'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+# Custom feature extractor (simplified for debugging)
+class CustomFeatureExtractor(BaseFeaturesExtractor):
+    def __init__(self, observation_space):
+        super(CustomFeatureExtractor, self).__init__(observation_space, features_dim=256)
+        try:
+            logger.info("Initializing CustomFeatureExtractor...")
+            # Load BERT without pre-trained weights as a fallback
+            self.bert = BertModel.from_pretrained('bert-base-uncased', local_files_only=False).to(device)
+            self.bert.eval()
+            logger.info("BERT initialized.")
+            self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+            logger.info("Tokenizer initialized.")
+            # Load ResNet without pre-trained weights as a fallback
+            self.resnet = models.resnet18(pretrained=False).to(device)
+            self.resnet.fc = torch.nn.Identity()
+            self.resnet.eval()
+            logger.info("ResNet initialized.")
+            self.image_transform = transforms.Compose([
+                transforms.Resize(256), transforms.CenterCrop(224), transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            ])
+            logger.info("Image transform initialized.")
+            # Transformer initialization (where error likely occurs)
+            self.transformer = torch.nn.TransformerEncoder(
+                torch.nn.TransformerEncoderLayer(d_model=774, nhead=6, dim_feedforward=512), num_layers=2
+            ).to(device)
+            logger.info("Transformer initialized.")
+            self.fc = torch.nn.Linear(774, 256).to(device)
+            logger.info("Fully connected layer initialized.")
+        except Exception as e:
+            logger.error(f"Error in CustomFeatureExtractor init: {str(e)}", exc_info=True)
+            raise
+
+    def forward(self, observations):
+        try:
+            batch_size = observations.shape[0]
+            bert_input = observations[:, :-4].reshape(batch_size, 1, 768)
+            extra_features = observations[:, -4:].to(device)
+            img = torch.zeros(224, 224, 3, dtype=torch.uint8)  # Placeholder image
+            img_tensor = self.image_transform(img).unsqueeze(0).to(device).repeat(batch_size, 1, 1, 1)
+            with torch.no_grad():
+                img_features = self.resnet(img_tensor).reshape(batch_size, 1, -1)[:, :, -2:]
+            combined = torch.cat((bert_input, extra_features.unsqueeze(1), img_features), dim=2)
+            transformer_out = self.transformer(combined.transpose(0, 1)).transpose(0, 1)
+            return self.fc(transformer_out.squeeze(1))
+        except Exception as e:
+            logger.error(f"Error in CustomFeatureExtractor forward: {str(e)}", exc_info=True)
+            raise
+
 # Data pipeline
 class DataPipeline:
     def __init__(self):
-        try:
-            self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-            self.bert_model = BertModel.from_pretrained('bert-base-uncased').to(device)
-            self.bert_model.eval()
-            logger.info("BERT model initialized successfully.")
-        except Exception as e:
-            logger.error(f"Error initializing BERT: {str(e)}", exc_info=True)
-            raise
+        self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+        self.bert_model = BertModel.from_pretrained('bert-base-uncased').to(device)
+        self.bert_model.eval()
 
     def process_blood_report(self, report):
-        try:
-            inputs = self.tokenizer(report, return_tensors='pt', truncation=True, padding=True, max_length=128)
-            inputs = {k: v.to(device) for k, v in inputs.items()}
-            with torch.no_grad():
-                outputs = self.bert_model(**inputs)
-            return outputs.pooler_output.squeeze().cpu().numpy()
-        except Exception as e:
-            logger.error(f"Error processing blood report: {str(e)}", exc_info=True)
-            raise
+        inputs = self.tokenizer(report, return_tensors='pt', truncation=True, padding=True, max_length=128)
+        inputs = {k: v.to(device) for k, v in inputs.items()}
+        with torch.no_grad():
+            outputs = self.bert_model(**inputs)
+        return outputs.pooler_output.squeeze().cpu().numpy()
 
     def extract_patient_data(self, file_path):
         text = self.read_file(file_path)
@@ -59,35 +101,27 @@ class DataPipeline:
             glucose = float(re.search(r"Glucose:\s*(\d+\.\d+)", text).group(1))
             age = float(re.search(r"Age:\s*(\d+)", text).group(1))
             weight = float(re.search(r"Weight:\s*(\d+\.\d+)", text).group(1))
-            logger.info(f"Extracted patient data: Hgb={hemoglobin}, Glu={glucose}, Age={age}, Weight={weight}")
             return text, hemoglobin, glucose, age, weight
         except AttributeError:
             raise ValueError("File missing required data: Hemoglobin, Glucose, Age, Weight")
-        except Exception as e:
-            logger.error(f"Error extracting patient data: {str(e)}", exc_info=True)
-            raise
 
     def read_file(self, file_path):
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File {file_path} not found")
-        try:
-            if file_path.endswith('.txt'):
-                with open(file_path, 'r') as f:
-                    return f.read()
-            elif file_path.endswith('.pdf'):
-                with open(file_path, 'rb') as f:
-                    pdf_reader = PyPDF2.PdfReader(f)
-                    text = ""
-                    for page in pdf_reader.pages:
-                        text += page.extract_text()
-                    return text
-            else:
-                raise ValueError("Unsupported file format. Use .txt or .pdf")
-        except Exception as e:
-            logger.error(f"Error reading file {file_path}: {str(e)}", exc_info=True)
-            raise
+        if file_path.endswith('.txt'):
+            with open(file_path, 'r') as f:
+                return f.read()
+        elif file_path.endswith('.pdf'):
+            with open(file_path, 'rb') as f:
+                pdf_reader = PyPDF2.PdfReader(f)
+                text = ""
+                for page in pdf_reader.pages:
+                    text += page.extract_text()
+                return text
+        else:
+            raise ValueError("Unsupported file format. Use .txt or .pdf")
 
-# Load TDC dataset (placeholder; ideally save this during training)
+# Load TDC dataset
 def load_tdc_data():
     return [
         "CCO", "CCN", "CCC", "C=O", "C#N", "CC=O", "CC#N", "COC", "CCOC", "CN",
@@ -97,43 +131,33 @@ def load_tdc_data():
 
 # Decode SMILES with confidence
 def decode_smiles(smiles, model, state):
-    try:
-        mol = Chem.MolFromSmiles(smiles)
-        mol_formula = rdMolDescriptors.CalcMolFormula(mol) if mol else "Invalid SMILES"
-        compounds = pcp.get_compounds(smiles, 'smiles')
-        drug_name = compounds[0].iupac_name if compounds else "Unknown"
-        with torch.no_grad():
-            logits, _ = model.policy.predict_values(torch.tensor(state, dtype=torch.float32).unsqueeze(0).to(device))
-            confidence = torch.softmax(logits, dim=-1).max().item()
-        logger.info(f"Decoded SMILES: {smiles} -> {drug_name}, {mol_formula}, Confidence={confidence}")
-        return drug_name, mol_formula, confidence
-    except Exception as e:
-        logger.error(f"Error decoding SMILES {smiles}: {str(e)}", exc_info=True)
-        raise
+    mol = Chem.MolFromSmiles(smiles)
+    mol_formula = rdMolDescriptors.CalcMolFormula(mol) if mol else "Invalid SMILES"
+    compounds = pcp.get_compounds(smiles, 'smiles')
+    drug_name = compounds[0].iupac_name if compounds else "Unknown"
+    with torch.no_grad():
+        logits, _ = model.policy.predict_values(torch.tensor(state, dtype=torch.float32).unsqueeze(0).to(device))
+        confidence = torch.softmax(logits, dim=-1).max().item()
+    return drug_name, mol_formula, confidence
 
 # Visualization
 def plot_patient_trajectory(history, rewards, filename="static/patient_trajectory.png"):
-    try:
-        hgb_history, glu_history = zip(*history)
-        plt.figure(figsize=(10, 6))
-        plt.subplot(2, 1, 1)
-        plt.plot(hgb_history, label="Hemoglobin")
-        plt.plot(glu_history, label="Glucose")
-        plt.axhspan(12, 16, alpha=0.2, color='green', label="Hgb Ideal")
-        plt.axhspan(70, 110, alpha=0.2, color='blue', label="Glu Ideal")
-        plt.legend()
-        plt.title("Patient State Trajectory")
-        plt.subplot(2, 1, 2)
-        plt.plot(rewards, label="Reward")
-        plt.legend()
-        plt.title("Reward Over Time")
-        plt.tight_layout()
-        plt.savefig(filename)
-        plt.close()
-        logger.info(f"Trajectory plot saved as {filename}")
-    except Exception as e:
-        logger.error(f"Error plotting trajectory: {str(e)}", exc_info=True)
-        raise
+    hgb_history, glu_history = zip(*history)
+    plt.figure(figsize=(10, 6))
+    plt.subplot(2, 1, 1)
+    plt.plot(hgb_history, label="Hemoglobin")
+    plt.plot(glu_history, label="Glucose")
+    plt.axhspan(12, 16, alpha=0.2, color='green', label="Hgb Ideal")
+    plt.axhspan(70, 110, alpha=0.2, color='blue', label="Glu Ideal")
+    plt.legend()
+    plt.title("Patient State Trajectory")
+    plt.subplot(2, 1, 2)
+    plt.plot(rewards, label="Reward")
+    plt.legend()
+    plt.title("Reward Over Time")
+    plt.tight_layout()
+    plt.savefig(filename)
+    plt.close()
 
 # Flask routes
 def allowed_file(filename):
@@ -155,16 +179,21 @@ def upload_file():
             file.save(file_path)
             logger.info(f"File uploaded: {filename}")
 
-            # Process file and predict
             pipeline = DataPipeline()
             try:
                 blood_report, hemoglobin, glucose, age, weight = pipeline.extract_patient_data(file_path)
                 blood_features = pipeline.process_blood_report(blood_report)
                 new_state = np.concatenate([blood_features, [hemoglobin, glucose, age, weight]]).astype(np.float32)
 
-                logger.info("Loading LUMINARIX model...")
-                model = PPO.load("ppo_luminarix_advanced.zip", device=device)
-                logger.info("Model loaded successfully.")
+                logger.info("Loading PPO model...")
+                try:
+                    model = PPO.load("ppo_luminarix_advanced.zip", device=device, map_location=device, custom_objects={
+                        "policy_kwargs": {"features_extractor_class": CustomFeatureExtractor}
+                    })
+                    logger.info("Model loaded successfully.")
+                except Exception as e:
+                    logger.error(f"Failed to load model: {str(e)}", exc_info=True)
+                    raise
 
                 state = new_state
                 history = [(hemoglobin, glucose)]
@@ -191,7 +220,6 @@ def upload_file():
                     history.append((hemoglobin, glucose))
                     rewards.append(reward)
                     steps.append(f"Step {step+1}: Drug {action}, Reward {reward:.2f}, Hgb {hemoglobin:.1f}, Glu {glucose:.1f}")
-                    logger.info(steps[-1])
                     if reward > 0:
                         break
                 
@@ -215,23 +243,14 @@ def upload_file():
 
 @app.route('/static/<path:filename>')
 def serve_plot(filename):
-    try:
-        return send_file(os.path.join('static', filename))
-    except Exception as e:
-        logger.error(f"Error serving plot {filename}: {str(e)}", exc_info=True)
-        flash(f"Error serving plot: {str(e)}")
-        return redirect(url_for('upload_file'))
+    return send_file(os.path.join('static', filename))
 
 if __name__ == "__main__":
     os.makedirs('static', exist_ok=True)
     model_path = "ppo_luminarix_advanced.zip"
     if not os.path.exists(model_path):
-        logger.error(f"Trained model '{model_path}' not found. Run train_luminarix.py first.")
-        print(f"Error: Trained model '{model_path}' not found. Run train_luminarix.py first.")
+        logger.error(f"Model file '{model_path}' not found. Run train_luminarix.py first.")
+        print(f"Error: Model file '{model_path}' not found. Run train_luminarix.py first.")
     else:
-        try:
-            logger.info("Starting Flask server...")
-            app.run(debug=True)
-        except Exception as e:
-            logger.error(f"Error starting Flask server: {str(e)}", exc_info=True)
-            raise
+        logger.info("Starting Flask server...")
+        app.run(debug=True)
