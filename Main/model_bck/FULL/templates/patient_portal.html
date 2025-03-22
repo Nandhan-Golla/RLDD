@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Patient Portal - LUMINARIX{% endblock %}
+{% block content %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="card col-span-2">
+            <h1 class="text-4xl font-bold text-blue-300 mb-6">Patient Nebula</h1>
+            <p class="text-gray-300 mb-8">Access your <span class="highlight">cosmic health matrix</span> and neural alerts.</p>
+        </div>
+
+        <div class="card">
+            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Vitality Rings</h2>
+            <div class="flex justify-center">
+                <svg width="150" height="150" class="bg-gray-900/50 rounded-full border border-blue-500/30">
+                    <circle cx="75" cy="75" r="60" fill="none" stroke="#3B82F6" stroke-width="10" />
+                    <circle cx="75" cy="75" r="60" fill="none" stroke="#A855F7" stroke-width="10" stroke-dasharray="188 377" class="animate-pulse" />
+                    <text x="75" y="80" fill="#E2E8F0" font-size="20" text-anchor="middle">75%</text>
+                </svg>
+            </div>
+            <p class="text-gray-300 text-center mt-2">Vitality Sync</p>
+        </div>
+
+        <div class="card">
+            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Neural Alerts</h2>
+            <ul class="list-disc pl-6 text-gray-300">
+                <li>Take Nano-Drug at <span class="highlight">18:00</span></li>
+                <li>Glucose levels <span class="highlight">stabilizing</span></li>
+            </ul>
+        </div>
+    </div>
+{% endblock %}

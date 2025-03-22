@@ -1,15 +1,22 @@
 {% extends "base.html" %}
-{% block title %}Results - LUMINARIX{% endblock %}
+{% block title %}Analysis Result - LUMINARIX{% endblock %}
 {% block content %}
-    <div class="card">
-        <h1>Analysis Results</h1>
-        <p><strong>Recommended Drug:</strong> {{ drug }}</p>
-        <p><strong>Recommended Drug Composition:</strong> {{ _drug_ }}</p>
-        <p><strong>SMILES:</strong> {{ smiles }}</p>
-        <p><strong>Action Index:</strong> {{ action }}</p>
-        <img src="data:image/png;base64,{{ static_plot }}" alt="Trajectory">
-        <p><a href="{{ url_for('download_trajectory') }}" class="button">Download Trajectory GIF</a></p>
-        <p><a href="{{ url_for('report') }}" class="button">View Full Report</a></p>
-        <p><a href="{{ url_for('upload_file') }}" class="button">Analyze Another</a></p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="card col-span-2 max-w-3xl mx-auto">
+            <h1 class="text-4xl font-bold text-blue-300 mb-6">Analysis Nexus</h1>
+            <p class="text-lg"><strong class="text-blue-400">Optimal Drug:</strong> <span class="highlight">{{ drug }}</span></p>
+            <p class="text-sm text-gray-300 mb-8"><strong>SMILES Signature:</strong> {{ smiles }}</p>
+
+            <h2 class="text-2xl font-semibold text-gray-200 mt-6 mb-4">Trajectory Preview</h2>
+            <div class="flex justify-center">
+                <img src="data:image/png;base64,{{ static_plot }}" alt="Static Trajectory Plot" class="rounded-lg shadow-lg max-w-full border border-blue-500/30">
+            </div>
+
+            <div class="mt-8 flex justify-center space-x-6">
+                <a href="{{ url_for('report') }}" class="button">Enter Full Report</a>
+                <a href="{{ url_for('upload_file') }}" class="button">New Uplink</a>
+                <button onclick="alert('Neural lock confirmed: {{ drug }} deployed')" class="button">Confirm Deployment</button>
+            </div>
+        </div>
     </div>
 {% endblock %}

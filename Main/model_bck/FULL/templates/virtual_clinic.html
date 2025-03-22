@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Virtual Clinic - LUMINARIX{% endblock %}
+{% block content %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="card col-span-2">
+            <h1 class="text-4xl font-bold text-blue-300 mb-6">Virtual Clinic</h1>
+            <p class="text-gray-300 mb-8">Engage with <span class="highlight">holographic patients</span> for cosmic diagnostics.</p>
+        </div>
+
+        <div class="card">
+            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Patient Holo-Node</h2>
+            <div class="flex justify-center">
+                <svg width="200" height="200" class="bg-gray-900/50 rounded-lg border border-blue-500/30">
+                    <circle cx="100" cy="100" r="50" fill="none" stroke="#A855F7" stroke-width="4" class="animate-pulse" />
+                    <text x="100" y="105" fill="#3B82F6" font-size="16" text-anchor="middle">Patient 001</text>
+                </svg>
+            </div>
+            <button onclick="alert('Diagnostic beam activated: Scanning Patient 001')" class="button mt-6 w-full">Activate Beam</button>
+        </div>
+
+        <div class="card col-span-2 flex justify-center">
+            <a href="{{ url_for('dashboard') }}" class="button">Return to Dashboard</a>
+        </div>
+    </div>
+{% endblock %}

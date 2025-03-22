@@ -18,18 +18,6 @@ import matplotlib.animation as animation
 import random
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-import pubchempy as pcp
-from rdkit import Chem
-from rdkit.Chem import rdMolDescriptors
-
-def decode_smiles(smiles):
-    mol = Chem.MolFromSmiles(smiles)
-    mol_formula = rdMolDescriptors.CalcMolFormula(mol)
-    compounds = pcp.get_compounds(smiles, 'smiles')
-    drug_name = compounds[0].iupac_name if compounds else "Unknown"
-    return drug_name, mol_formula
-
-
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -47,9 +35,9 @@ app.config['STATIC_FOLDER'] = STATIC_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(STATIC_FOLDER, exist_ok=True)
 
-class SimplePolicy(nn.Module):
+class A2C(nn.Module):
     def __init__(self, input_dim=4, output_dim=20):
-        super(SimplePolicy, self).__init__()
+        super(A2C, self).__init__()
         self.net = nn.Sequential(
             nn.Linear(input_dim, 128),
             nn.ReLU(),
@@ -61,7 +49,7 @@ class SimplePolicy(nn.Module):
     def forward(self, x):
         return self.net(x)
 
-MODEL_PATH = "simple_policy.pth"
+MODEL_PATH = "policy.pth"
 DRUG_LIST_PATH = "drug_list.npy"
 DRUG_EFFECTS_PATH = "drug_effects.npy"
 DRUG_NAMES_PATH = "drug_names.txt"
@@ -75,7 +63,7 @@ drug_effects = np.load(DRUG_EFFECTS_PATH, allow_pickle=True).tolist()
 with open(DRUG_NAMES_PATH, 'r') as f:
     drug_names = [line.strip() for line in f.readlines()]
 num_drugs = len(drug_list)
-policy = SimplePolicy(input_dim=4, output_dim=num_drugs).to(device)
+policy = A2C(input_dim=4, output_dim=num_drugs).to(device)
 try:
     policy.load_state_dict(torch.load(MODEL_PATH, map_location=device))
     policy.eval()
@@ -106,11 +94,12 @@ class DataPipeline:
         logger.info(f"Extracted patient data: Hemoglobin={hemoglobin}, Glucose={glucose}, Age={age}, Weight={weight}")
         return state
 
-def simulate_treatment(state):
+def simulate_treatment(state, mood="calm"):
     hemoglobin, glucose, age, weight = state
     history = [(hemoglobin, glucose)]
     rewards = []
     actions = []
+    mood_factor = 1.0 if mood == "calm" else 1.5  # Increase side effects if stressed
     with torch.no_grad():
         for step in range(5):
             action_logits = policy(torch.tensor(state, dtype=torch.float32).to(device))
@@ -124,11 +113,9 @@ def simulate_treatment(state):
             glu_change = drug_effects[action][1] * (weight / 70)
             hemoglobin += hgb_change
             glucose += glu_change
-            side_effect = drug_effects[action][2] * (age / 50)
-
+            side_effect = drug_effects[action][2] * (age / 50) * mood_factor
             hemoglobin = max(10.0, min(18.0, hemoglobin))
-            glucose = max(50.0, min(200.0, glucose)) 
-
+            glucose = max(50.0, min(200.0, glucose))
             reward = -(max(0, 12 - hemoglobin) + max(0, hemoglobin - 16) +
                        max(0, 70 - glucose) + max(0, glucose - 110)) - side_effect
             state = np.array([hemoglobin, glucose, age, weight], dtype=np.float32)
@@ -143,7 +130,6 @@ def simulate_treatment(state):
 def plot_trajectory(history, rewards):
     hgb, glu = zip(*history)
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 8))
-    
     ax1.plot(hgb, label="Hemoglobin (g/dL)", color="red")
     ax1.plot(glu, label="Glucose (mg/dL)", color="blue")
     ax1.axhspan(12, 16, alpha=0.2, color='red', label="Hgb Target Range")
@@ -202,6 +188,24 @@ def plot_trajectory(history, rewards):
         trajectory_gif = base64.b64encode(f.read()).decode('utf-8')
     
     return trajectory_gif, static_plot
+
+def plot_holographic_trajectory(history):
+    hgb, glu = zip(*history)
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111, projection='3d')
+    steps = range(len(history))
+    ax.plot(steps, hgb, glu, color='cyan', lw=2, label='Trajectory')
+    ax.scatter(steps, hgb, glu, c='purple', s=50)
+    ax.set_xlabel('Step')
+    ax.set_ylabel('Hemoglobin (g/dL)')
+    ax.set_zlabel('Glucose (mg/dL)')
+    ax.set_title('Holographic Trajectory Projection')
+    ax.legend()
+    buf = BytesIO()
+    plt.savefig(buf, format="png")
+    plt.close()
+    buf.seek(0)
+    return base64.b64encode(buf.getvalue()).decode('utf-8')
 
 def plot_drug_effects():
     try:
@@ -291,8 +295,8 @@ def symptom_checker(symptoms):
 
 def calculate_dosage(state, drug_index):
     _, _, age, weight = state
-    base_dose = 10 
-    dose = base_dose * (weight / 70) * (50 / age) 
+    base_dose = 10
+    dose = base_dose * (weight / 70) * (50 / age)
     return f"Recommended {drug_names[drug_index]} dosage: {dose:.2f} mg (adjusted for age {age}, weight {weight} kg)"
 
 def check_interactions(drug, current_meds):
@@ -314,16 +318,23 @@ def export_timeline(history, rewards, drug):
     c.save()
     return pdf_path
 
+def quantum_synergy_predictor(actions):
+    primary_drug = drug_names[actions[-1]]
+    synergy_drugs = random.sample(drug_names, 2)
+    return f"Quantum analysis suggests synergy between {primary_drug} and {', '.join(synergy_drugs)} (simulated)."
+
+# Global variables
 latest_state = None
 latest_history = None
 latest_rewards = None
 latest_actions = None
 latest_symptoms = ""
 latest_meds = ""
+latest_mood = "calm"
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
-    global latest_state, latest_history, latest_rewards, latest_actions
+    global latest_state, latest_history, latest_rewards, latest_actions, latest_mood
     if request.method == 'POST':
         if 'file' not in request.files:
             flash('No file part')
@@ -337,7 +348,8 @@ def upload_file():
             try:
                 state = pipeline.extract_patient_data(file_path)
                 latest_state = state
-                history, rewards, actions = simulate_treatment(state)
+                latest_mood = request.form.get('mood', 'calm')
+                history, rewards, actions = simulate_treatment(state, mood=latest_mood)
                 latest_history, latest_rewards, latest_actions = history, rewards, actions
                 if not history or not rewards or not actions:
                     raise ValueError("Simulation returned empty results")
@@ -377,6 +389,7 @@ def report():
         return redirect(url_for('upload_file'))
     
     trajectory_gif, static_plot = plot_trajectory(latest_history, latest_rewards)
+    holographic_plot = plot_holographic_trajectory(latest_history)
     drug_plot = plot_drug_effects()
     final_action = latest_actions[-1]
     drug_structure_plot, drug_name = plot_drug_structure(drug_list[final_action], drug_names[final_action])
@@ -388,6 +401,7 @@ def report():
     symptom_results = []
     dosage = ""
     interaction_alerts = []
+    synergy_prediction = ""
     if request.method == 'POST':
         if 'symptoms' in request.form:
             latest_symptoms = request.form['symptoms']
@@ -397,10 +411,13 @@ def report():
         if 'current_meds' in request.form:
             latest_meds = request.form['current_meds']
             interaction_alerts = check_interactions(drug_name, latest_meds)
+        if 'quantum_synergy' in request.form:
+            synergy_prediction = quantum_synergy_predictor(latest_actions)
     
     return render_template('report.html', 
                           trajectory_gif=trajectory_gif,
                           static_plot=static_plot,
+                          holographic_plot=holographic_plot,
                           drug_plot=drug_plot, 
                           drug_structure_plot=drug_structure_plot, 
                           drug=drug_name, 
@@ -413,15 +430,16 @@ def report():
                           symptom_results=symptom_results,
                           dosage=dosage,
                           interaction_alerts=interaction_alerts,
+                          synergy_prediction=synergy_prediction,
                           symptoms=latest_symptoms,
-                          current_meds=latest_meds)
+                          current_meds=latest_meds,
+                          mood=latest_mood)
 
 @app.route('/result/<int:action>/<drug>/<smiles>')
-#drug_name, mol_formula = decode_smiles(recommended_drug)
 def result(action, drug, smiles):
     global latest_history, latest_rewards
     _, static_plot = plot_trajectory(latest_history, latest_rewards)
-    return render_template('result.html', action=action, drug=drug, smiles=smiles,_drug_ = decode_smiles(smiles)[0], static_plot=static_plot)
+    return render_template('result.html', action=action, drug=drug, smiles=smiles, static_plot=static_plot)
 
 @app.route('/download_trajectory')
 def download_trajectory():
@@ -453,5 +471,25 @@ def download_timeline():
 def about():
     return render_template('about.html')
 
+# [Previous app.py content unchanged until routes]
+
+@app.route('/dashboard')
+def dashboard():
+    return render_template('dashboard.html')
+
+@app.route('/virtual_clinic')
+def virtual_clinic():
+    return render_template('virtual_clinic.html')
+
+@app.route('/drug_lab')
+def drug_lab():
+    return render_template('drug_lab.html')
+
+@app.route('/patient_portal')
+def patient_portal():
+    return render_template('patient_portal.html')
+
+# [Existing routes: upload_file, visualization, report, result, downloads, about unchanged]
+
 if __name__ == "__main__":
-    app.run(debug=True, port=5002)
+    app.run(debug=True)

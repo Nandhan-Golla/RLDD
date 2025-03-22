@@ -1,124 +1,202 @@
 {% extends "base.html" %}
 {% block title %}Treatment Report - LUMINARIX{% endblock %}
 {% block content %}
-    <div class="card">
-        <h1>LUMINARIX Treatment Report</h1>
-        <p><strong>Recommended Drug:</strong> {{ drug }}</p>
-        <p><strong>SMILES:</strong> {{ smiles }}</p>
-        
-        <h2>Treatment Trajectory (Animated)</h2>
-        <img src="data:image/gif;base64,{{ trajectory_gif }}" alt="Trajectory GIF">
-        <h3>Fallback Static Plot (if GIF fails)</h3>
-        <img src="data:image/png;base64,{{ static_plot }}" alt="Static Trajectory Plot">
-        
-        <h2>Drug Effects Comparison</h2>
-        {% if drug_plot %}
-            <img src="data:image/png;base64,{{ drug_plot }}" alt="Drug Effects Plot">
-        {% else %}
-            <p>Drug effects plot unavailable.</p>
-        {% endif %}
-        
-        <h2>3D Structure of Recommended Drug: {{ drug }}</h2>
-        {% if drug_structure_plot %}
-            <img src="data:image/png;base64,{{ drug_structure_plot }}" alt="Drug Structure Plot">
-        {% else %}
-            <p>No 3D structure available for {{ drug }}.</p>
-        {% endif %}
-        
-        <h2>Treatment Details</h2>
-        <table>
-            <tr><th>Step</th><th>Hemoglobin (g/dL)</th><th>Glucose (mg/dL)</th><th>Reward</th></tr>
-            {% if history and rewards %}
-                {% for i in range(history|length) %}
-                    <tr>
-                        <td>{{ i+1 }}</td>
-                        <td>{{ (history[i][0] if history[i][0] is not none else 0)|round(1) }}</td>
-                        <td>{{ (history[i][1] if history[i][1] is not none else 0)|round(1) }}</td>
-                        <td>{{ (rewards[i] if i < rewards|length and rewards[i] is not none else 0)|round(2) }}</td>
-                    </tr>
-                {% endfor %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="card col-span-2">
+            <h1 class="text-4xl font-bold text-blue-300 mb-6">Treatment Cosmos</h1>
+            <p class="text-lg"><strong class="text-blue-400">Optimal Drug:</strong> <span class="highlight">{{ drug }}</span> (Mood: {{ mood|capitalize }})</p>
+            <p class="text-sm text-gray-300 mb-8"><strong>SMILES Signature:</strong> {{ smiles }}</p>
+
+            <h2 class="text-2xl font-semibold text-gray-200 mt-6 mb-4">Trajectory Stream</h2>
+            <div class="flex justify-center">
+                <img src="data:image/gif;base64,{{ trajectory_gif }}" alt="Trajectory GIF" class="rounded-lg shadow-lg max-w-full border border-blue-500/30">
+            </div>
+            <p class="text-sm text-gray-400 mt-2 text-center">Static Stream Backup</p>
+            <div class="flex justify-center mt-2">
+                <img src="data:image/png;base64,{{ static_plot }}" alt="Static Trajectory Plot" class="rounded-lg shadow-lg max-w-full border border-blue-500/30">
+            </div>
+            <div class="mt-6 text-center">
+                <a href="{{ url_for('download_trajectory') }}" class="button">Extract Stream</a>
+            </div>
+        </div>
+
+        <div class="card col-span-2">
+            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Holographic Orbit</h2>
+            <div class="flex justify-center">
+                <img src="data:image/png;base64,{{ holographic_plot }}" alt="Holographic Plot" class="rounded-lg shadow-lg max-w-full border border-blue-500/30">
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Efficacy Spectrum</h2>
+            {% if drug_plot %}
+                <img src="data:image/png;base64,{{ drug_plot }}" alt="Drug Effects Plot" class="rounded-lg w-full border border-blue-500/30">
             {% else %}
-                <tr><td colspan="4">No data available</td></tr>
+                <p class="text-gray-400">Spectrum offline.</p>
             {% endif %}
-        </table>
-        
-        <h2>Predicted Conditions</h2>
-        {% if conditions %}
-            <ul>
-                {% for condition in conditions %}
-                    <li>{{ condition }}</li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>No conditions predicted.</p>
-        {% endif %}
-        
-        <h2>Drug Interaction Warnings</h2>
-        {% if interactions %}
-            <p><strong>Caution:</strong> {{ drug }} may interact with: {{ interactions|join(', ') }}</p>
-        {% else %}
-            <p>No known interactions detected.</p>
-        {% endif %}
-        
-        <h2>Real-Time Insights</h2>
-        {% if insights %}
-            <ul>
-                {% for insight in insights %}
-                    <li>{{ insight }}</li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>No insights available.</p>
-        {% endif %}
+            <a href="{{ url_for('download_drug_effects') }}" class="button mt-6 inline-block">Extract</a>
+        </div>
 
-        <!-- New Features -->
-        <h2>AI-Powered Symptom Checker</h2>
-        <form method="post">
-            <label for="symptoms">Enter Symptoms (comma-separated):</label>
-            <input type="text" id="symptoms" name="symptoms" value="{{ symptoms }}" placeholder="e.g., fever, fatigue">
-            <button type="submit" class="button">Check My Symptoms</button>
-        </form>
-        {% if symptom_results %}
-            <ul>
-                {% for result in symptom_results %}
-                    <li>{{ result }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}
+        <div class="card">
+            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Molecular Orbit: {{ drug }}</h2>
+            {% if drug_structure_plot %}
+                <img src="data:image/png;base64,{{ drug_structure_plot }}" alt="Drug Structure Plot" class="rounded-lg w-full border border-blue-500/30">
+                <button onclick="alert('AR projection initiated: {{ drug }} in 3D orbit')" class="button mt-6 w-full">Project AR Orbit</button>
+            {% else %}
+                <p class="text-gray-400">No orbit data for {{ drug }}.</p>
+            {% endif %}
+            <a href="{{ url_for('download_drug_structure') }}" class="button mt-6 inline-block">Extract</a>
+        </div>
 
-        <h2>Personalized Dosage Calculator</h2>
-        <form method="post">
-            <button type="submit" name="calculate_dosage" value="true" class="button">Calculate Dosage</button>
-        </form>
-        {% if dosage %}
-            <p>{{ dosage }}</p>
-        {% endif %}
+        <div class="card col-span-2">
+            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Stellar Drug Network</h2>
+            <div class="flex justify-center">
+                <svg width="400" height="200" class="bg-gray-900/50 rounded-lg border border-blue-500/30">
+                    <circle cx="200" cy="100" r="12" fill="#3B82F6" class="animate-pulse" />
+                    <circle cx="250" cy="50" r="8" fill="#A855F7" />
+                    <circle cx="150" cy="150" r="8" fill="#10B981" />
+                    <line x1="200" y1="100" x2="250" y2="50" stroke="#60A5FA" stroke-width="1" stroke-dasharray="5 5" />
+                    <line x1="200" y1="100" x2="150" y2="150" stroke="#60A5FA" stroke-width="1" stroke-dasharray="5 5" />
+                    <text x="205" y="105" fill="white" font-size="14" font-weight="700">{{ drug }}</text>
+                </svg>
+            </div>
+            <p class="text-gray-400 text-center mt-2">Mapping <span class="highlight">synergistic pathways</span>.</p>
+        </div>
 
-        <h2>Real-Time Drug Interaction Alerts</h2>
-        <form method="post">
-            <label for="current_meds">Enter Current Medications (comma-separated):</label>
-            <input type="text" id="current_meds" name="current_meds" value="{{ current_meds }}" placeholder="e.g., Aspirin, Metformin">
-            <button type="submit" class="button">Check Interactions</button>
-        </form>
-        {% if interaction_alerts %}
-            <ul>
-                {% for alert in interaction_alerts %}
-                    <li>{{ alert }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}
+        <div class="card col-span-2">
+            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Data Nebula</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-800/50">
+                            <th class="p-4 text-gray-200">Step</th>
+                            <th class="p-4 text-gray-200">Hemoglobin (g/dL)</th>
+                            <th class="p-4 text-gray-200">Glucose (mg/dL)</th>
+                            <th class="p-4 text-gray-200">Reward</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if history and rewards %}
+                            {% for i in range(history|length) %}
+                                <tr class="border-b border-gray-700/50">
+                                    <td class="p-4">{{ i+1 }}</td>
+                                    <td class="p-4"><span class="highlight">{{ (history[i][0] if history[i][0] is not none else 0)|round(1) }}</span></td>
+                                    <td class="p-4"><span class="highlight">{{ (history[i][1] if history[i][1] is not none else 0)|round(1) }}</span></td>
+                                    <td class="p-4">{{ (rewards[i] if i < rewards|length and rewards[i] is not none else 0)|round(2) }}</td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr><td colspan="4" class="p-4 text-gray-400">Nebula offline</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-        <h2>Export Options</h2>
-        <p><a href="{{ url_for('download_timeline') }}" class="button">Export Timeline</a></p>
+        <div class="card">
+            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Condition Scan</h2>
+            {% if conditions %}
+                <ul class="list-disc pl-6">
+                    {% for condition in conditions %}
+                        <li class="text-gray-300">{{ condition }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-gray-400">No anomalies detected.</p>
+            {% endif %}
+        </div>
 
-        <h2>Voice Command Interface (Simulated)</h2>
-        <p>Try saying: "Show report" (simulated as button for now)</p>
-        <button onclick="alert('Voice command simulated: Report displayed')" class="button">Voice Commands</button>
+        <div class="card">
+            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Interaction Grid</h2>
+            {% if interactions %}
+                <p class="text-red-400"><strong>Alert:</strong> {{ drug }} may intersect with: {{ interactions|join(', ') }}</p>
+            {% else %}
+                <p class="text-gray-400">No intersections detected.</p>
+            {% endif %}
+        </div>
 
-        <!-- Existing Buttons -->
-        <p><a href="{{ url_for('download_trajectory') }}" class="button">Download Trajectory GIF</a></p>
-        <p><a href="{{ url_for('download_drug_effects') }}" class="button">Download Drug Effects Plot</a></p>
-        <p><a href="{{ url_for('download_drug_structure') }}" class="button">Download Drug Structure Plot</a></p>
-        <p><a href="{{ url_for('upload_file') }}" class="button">Analyze Another</a></p>
+        <div class="card">
+            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Insight Array</h2>
+            {% if insights %}
+                <ul class="list-disc pl-6">
+                    {% for insight in insights %}
+                        <li class="text-gray-300">{{ insight }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-gray-400">Array empty.</p>
+            {% endif %}
+            <button onclick="alert('Voice array: {{ insights|join(\', \') }}')" class="button mt-6 w-full">Voice Array</button>
+        </div>
+
+        <div class="card">
+            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Symptom Scanner</h2>
+            <form method="post" class="space-y-4">
+                <label for="symptoms" class="block text-gray-200 font-semibold">Symptoms:</label>
+                <input type="text" id="symptoms" name="symptoms" value="{{ symptoms }}" placeholder="e.g., fever, fatigue" class="w-full p-3 border rounded-lg bg-gray-800/50 text-gray-200 border-gray-700 hover:border-blue-400 transition-all">
+                <button type="submit" class="button w-full">Scan Symptoms</button>
+            </form>
+            {% if symptom_results %}
+                <ul class="list-disc pl-6 mt-4">
+                    {% for result in symptom_results %}
+                        <li class="text-gray-300">{{ result }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+
+        <div class="card">
+            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Dosage Vector</h2>
+            <form method="post">
+                <button type="submit" name="calculate_dosage" value="true" class="button w-full">Compute Vector</button>
+            </form>
+            {% if dosage %}
+                <p class="text-gray-300 mt-4"><span class="highlight">{{ dosage }}</span></p>
+            {% endif %}
+        </div>
+
+        <div class="card">
+            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Interaction Scanner</h2>
+            <form method="post" class="space-y-4">
+                <label for="current_meds" class="block text-gray-200 font-semibold">Current Meds:</label>
+                <input type="text" id="current_meds" name="current_meds" value="{{ current_meds }}" placeholder="e.g., Aspirin, Metformin" class="w-full p-3 border rounded-lg bg-gray-800/50 text-gray-200 border-gray-700 hover:border-blue-400 transition-all">
+                <button type="submit" class="button w-full">Scan Grid</button>
+            </form>
+            {% if interaction_alerts %}
+                <ul class="list-disc pl-6 mt-4">
+                    {% for alert in interaction_alerts %}
+                        <li class="text-red-400">{{ alert }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+
+        <div class="card">
+            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Quantum Synergy</h2>
+            <form method="post">
+                <button type="submit" name="quantum_synergy" value="true" class="button w-full">Predict Synergy</button>
+            </form>
+            {% if synergy_prediction %}
+                <p class="text-gray-300 mt-4"><span class="highlight">{{ synergy_prediction }}</span></p>
+            {% endif %}
+        </div>
+
+        <div class="card">
+            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Time Continuum</h2>
+            <input type="range" min="1" max="10" value="5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" style="accent-color: #3B82F6;" oninput="this.nextElementSibling.innerText = 'Step: ' + this.value">
+            <p class="text-gray-300 mt-2">Step: 5</p>
+        </div>
+
+        <div class="card col-span-2">
+            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Command Array</h2>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-6">
+                <a href="{{ url_for('download_trajectory') }}" class="button text-center">Extract Stream</a>
+                <a href="{{ url_for('download_drug_effects') }}" class="button text-center">Extract Spectrum</a>
+                <a href="{{ url_for('download_drug_structure') }}" class="button text-center">Extract Orbit</a>
+                <a href="{{ url_for('download_timeline') }}" class="button text-center">Export Nebula</a>
+                <button onclick="alert('Voice command: Report accessed')" class="button">Voice Command</button>
+            </div>
+            <a href="{{ url_for('upload_file') }}" class="button mt-6 inline-block">New Uplink</a>
+        </div>
     </div>
 {% endblock %}
