@@ -9,24 +9,24 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+            background: #1A1A2E;
             color: #E2E8F0;
             min-height: 100vh;
         }
         .card {
             background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            border: 1px solid rgba(59, 130, 246, 0.2);
-            padding: 2rem;
+            backdrop-filter: blur(12px);
+            border-radius: 12px;
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            padding: 1.5rem;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         .card:hover {
-            transform: scale(1.02);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3), 0 0 20px rgba(59, 130, 246, 0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 212, 255, 0.3);
         }
         .button {
-            background: linear-gradient(90deg, #3B82F6, #A855F7);
+            background: linear-gradient(90deg, #00D4FF, #FF007A);
             color: white;
             padding: 0.75rem 1.5rem;
             border-radius: 8px;
@@ -34,40 +34,41 @@
             font-weight: 700;
         }
         .button:hover {
-            background: linear-gradient(90deg, #2563EB, #9333EA);
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
+            background: linear-gradient(90deg, #00BFFF, #E6006A);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
             animation: pulse 1.5s infinite;
         }
-        .nav-glow {
-            transition: text-shadow 0.3s ease;
+        .nav-link {
+            transition: color 0.3s ease, text-shadow 0.3s ease;
         }
-        .nav-glow:hover {
-            text-shadow: 0 0 8px rgba(168, 85, 247, 0.8), 0 0 12px rgba(59, 130, 246, 0.6);
+        .nav-link:hover {
+            color: #00D4FF;
+            text-shadow: 0 0 8px rgba(0, 212, 255, 0.6);
         }
         .highlight {
-            color: #10B981;
+            color: #FF007A;
             font-weight: 700;
         }
         @keyframes pulse {
-            0% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.6); }
-            50% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.9); }
-            100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.6); }
+            0% { box-shadow: 0 0 5px rgba(0, 212, 255, 0.5); }
+            50% { box-shadow: 0 0 15px rgba(0, 212, 255, 0.8); }
+            100% { box-shadow: 0 0 5px rgba(0, 212, 255, 0.5); }
         }
     </style>
 </head>
 <body>
-    <nav class="bg-gray-900/80 backdrop-filter backdrop-blur-lg shadow-lg p-4 fixed w-full top-0 z-10">
+    <nav class="bg-gray-900/90 backdrop-filter backdrop-blur-lg shadow-lg p-4 fixed w-full top-0 z-10">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <a href="{{ url_for('upload_file') }}" class="text-3xl font-bold text-blue-400 nav-glow">LUMINARIX</a>
+            <a href="{{ url_for('upload_file') }}" class="text-3xl font-bold text-blue-300">LUMINARIX</a>
             <div class="space-x-6">
-                <a href="{{ url_for('upload_file') }}" class="text-gray-300 hover:text-blue-400 nav-glow">Home</a>
-                <a href="{{ url_for('dashboard') }}" class="text-gray-300 hover:text-blue-400 nav-glow">Dashboard</a>
-                <a href="{{ url_for('virtual_clinic') }}" class="text-gray-300 hover:text-blue-400 nav-glow">Virtual Clinic</a>
-                <a href="{{ url_for('drug_lab') }}" class="text-gray-300 hover:text-blue-400 nav-glow">Drug Lab</a>
-                <a href="{{ url_for('patient_portal') }}" class="text-gray-300 hover:text-blue-400 nav-glow">Patient Portal</a>
-                <a href="{{ url_for('visualization') }}" class="text-gray-300 hover:text-blue-400 nav-glow">Visualization</a>
-                <a href="{{ url_for('report') }}" class="text-gray-300 hover:text-blue-400 nav-glow">Report</a>
-                <a href="{{ url_for('about') }}" class="text-gray-300 hover:text-blue-400 nav-glow">About</a>
+                <a href="{{ url_for('upload_file') }}" class="text-gray-300 nav-link">Upload</a>
+                <a href="{{ url_for('dashboard') }}" class="text-gray-300 nav-link">Dashboard</a>
+                <a href="{{ url_for('virtual_clinic') }}" class="text-gray-300 nav-link">Virtual Clinic</a>
+                <a href="{{ url_for('drug_lab') }}" class="text-gray-300 nav-link">Drug Lab</a>
+                <a href="{{ url_for('patient_portal') }}" class="text-gray-300 nav-link">Patient Portal</a>
+                <a href="{{ url_for('visualization') }}" class="text-gray-300 nav-link">Visualization</a>
+                <a href="{{ url_for('report') }}" class="text-gray-300 nav-link">Report</a>
+                <a href="{{ url_for('about') }}" class="text-gray-300 nav-link">About</a>
             </div>
         </div>
     </nav>

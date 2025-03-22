@@ -1,24 +1,24 @@
 {% extends "base.html" %}
-{% block title %}Upload Patient Report - LUMINARIX{% endblock %}
+{% block title %}Upload Patient Data - LUMINARIX{% endblock %}
 {% block content %}
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="card col-span-2 max-w-2xl mx-auto">
-            <h1 class="text-4xl font-bold text-blue-300 mb-6">Quantum Data Uplink</h1>
-            <p class="text-gray-300 mb-8">Transmit patient data into the LUMINARIX cosmos for <span class="highlight">hyper-precise</span> analysis.</p>
+            <h1 class="text-4xl font-bold text-blue-300 mb-6">Patient Data Upload</h1>
+            <p class="text-gray-300 mb-8">Upload patient records for <span class="highlight">AI-driven</span> treatment analysis and insights.</p>
             
             <form method="post" enctype="multipart/form-data" class="space-y-6">
                 <div>
-                    <label for="file" class="block text-gray-200 mb-2 font-semibold">Data Core:</label>
-                    <input type="file" id="file" name="file" accept=".txt,.pdf" class="w-full p-3 border rounded-lg bg-gray-800/50 text-gray-200 border-gray-700 hover:border-blue-400 transition-all">
+                    <label for="file" class="block text-gray-200 mb-2 font-semibold">Patient File:</label>
+                    <input type="file" id="file" name="file" accept=".txt,.pdf" class="w-full p-3 border rounded-lg bg-gray-800/50 text-gray-200 border-gray-700 hover:border-blue-300 transition-all">
                 </div>
                 <div>
-                    <label for="mood" class="block text-gray-200 mb-2 font-semibold">Mood Vector:</label>
-                    <select id="mood" name="mood" class="w-full p-3 border rounded-lg bg-gray-800/50 text-gray-200 border-gray-700 hover:border-blue-400 transition-all">
+                    <label for="mood" class="block text-gray-200 mb-2 font-semibold">Patient Mood:</label>
+                    <select id="mood" name="mood" class="w-full p-3 border rounded-lg bg-gray-800/50 text-gray-200 border-gray-700 hover:border-blue-300 transition-all">
                         <option value="calm">Calm</option>
                         <option value="stressed">Stressed</option>
                     </select>
                 </div>
-                <button type="submit" class="button w-full">Launch Analysis</button>
+                <button type="submit" class="button w-full">Analyze Data</button>
             </form>
         </div>
     </div>
