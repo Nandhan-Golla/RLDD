@@ -1,45 +1,36 @@
 {% extends "base.html" %}
 {% block title %}Clinical Dashboard - LUMINARIX{% endblock %}
 {% block content %}
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div class="card col-span-2">
-            <h1 class="text-4xl font-bold text-blue-300 mb-6">Clinical Dashboard</h1>
-            <p class="text-gray-300 mb-8">Monitor <span class="highlight">real-time patient vitals</span> and system analytics.</p>
+            <h1 class="text-5xl font-bold text-blue-300 mb-6">Clinical Dashboard</h1>
+            <p class="text-gray-300 mb-8">Monitor <span class="highlight">blood report analytics</span> and patient treatment progress.</p>
         </div>
 
         <div class="card">
-            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Patient Vitals</h2>
+            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Biomarker Overview</h2>
             <div class="space-y-6">
                 <div>
-                    <p class="text-gray-300">Heart Rate: <span class="highlight animate-pulse">72 bpm</span></p>
+                    <p class="text-gray-300">Hemoglobin: <span class="highlight animate-pulse">14.2 g/dL</span></p>
                     <div class="w-full bg-gray-700/50 h-3 rounded-full">
-                        <div class="bg-gradient-to-r from-blue-300 to-pink-500 h-3 rounded-full animate-pulse" style="width: 72%;"></div>
+                        <div class="bg-gradient-to-r from-blue-300 to-pink-500 h-3 rounded-full animate-pulse" style="width: 85%;"></div>
                     </div>
                 </div>
                 <div>
-                    <p class="text-gray-300">Oxygen Level: <span class="highlight animate-pulse">98%</span></p>
+                    <p class="text-gray-300">Glucose: <span class="highlight animate-pulse">95 mg/dL</span></p>
                     <div class="w-full bg-gray-700/50 h-3 rounded-full">
-                        <div class="bg-gradient-to-r from-blue-300 to-pink-500 h-3 rounded-full animate-pulse" style="width: 98%;"></div>
+                        <div class="bg-gradient-to-r from-blue-300 to-pink-500 h-3 rounded-full animate-pulse" style="width: 60%;"></div>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="card">
-            <h2 class="text-2xl font-semibold text-gray-200 mb-4">System Analytics</h2>
+            <h2 class="text-2xl font-semibold text-gray-200 mb-4">AI Analysis Status</h2>
             <svg width="100%" height="120" class="bg-gray-900/50 rounded-lg border border-blue-300/30">
                 <circle cx="50%" cy="50%" r="40" fill="none" stroke="#00D4FF" stroke-width="4" stroke-dasharray="20 10" class="animate-spin-slow" />
-                <text x="50%" y="50%" fill="#FF007A" font-size="16" text-anchor="middle" dy=".3em">AI Processing</text>
+                <text x="50%" y="50%" fill="#FF007A" font-size="16" text-anchor="middle" dy=".3em">Processing</text>
             </svg>
         </div>
     </div>
-    <style>
-        @keyframes spin-slow {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .animate-spin-slow {
-            animation: spin-slow 5s linear infinite;
-        }
-    </style>
 {% endblock %}

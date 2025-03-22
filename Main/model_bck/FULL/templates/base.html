@@ -9,21 +9,49 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background: #1A1A2E;
+            background: #0F0F1A;
             color: #E2E8F0;
             min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(0, 212, 255, 0.1) 0%, rgba(0, 0, 0, 0.8) 100%);
+            z-index: -1;
         }
         .card {
             background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(12px);
-            border-radius: 12px;
-            border: 1px solid rgba(0, 212, 255, 0.2);
-            padding: 1.5rem;
+            backdrop-filter: blur(15px);
+            border-radius: 16px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            padding: 2rem;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 212, 255, 0.2) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        .card:hover::before {
+            opacity: 1;
         }
         .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3), 0 0 20px rgba(0, 212, 255, 0.3);
+            transform: translateY(-6px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4), 0 0 30px rgba(0, 212, 255, 0.5);
         }
         .button {
             background: linear-gradient(90deg, #00D4FF, #FF007A);
@@ -32,10 +60,25 @@
             border-radius: 8px;
             transition: all 0.3s ease;
             font-weight: 700;
+            position: relative;
+            overflow: hidden;
+        }
+        .button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: 0.5s;
+        }
+        .button:hover::before {
+            left: 100%;
         }
         .button:hover {
             background: linear-gradient(90deg, #00BFFF, #E6006A);
-            box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.7);
             animation: pulse 1.5s infinite;
         }
         .nav-link {
@@ -43,36 +86,41 @@
         }
         .nav-link:hover {
             color: #00D4FF;
-            text-shadow: 0 0 8px rgba(0, 212, 255, 0.6);
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.8);
         }
         .highlight {
             color: #FF007A;
             font-weight: 700;
+            text-shadow: 0 0 5px rgba(255, 0, 122, 0.5);
         }
         @keyframes pulse {
             0% { box-shadow: 0 0 5px rgba(0, 212, 255, 0.5); }
-            50% { box-shadow: 0 0 15px rgba(0, 212, 255, 0.8); }
+            50% { box-shadow: 0 0 20px rgba(0, 212, 255, 0.8); }
             100% { box-shadow: 0 0 5px rgba(0, 212, 255, 0.5); }
+        }
+        @keyframes spin-slow {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .animate-spin-slow {
+            animation: spin-slow 10s linear infinite;
         }
     </style>
 </head>
 <body>
-    <nav class="bg-gray-900/90 backdrop-filter backdrop-blur-lg shadow-lg p-4 fixed w-full top-0 z-10">
+    <nav class="bg-gray-900/95 backdrop-filter backdrop-blur-lg shadow-lg p-4 fixed w-full top-0 z-20">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <a href="{{ url_for('upload_file') }}" class="text-3xl font-bold text-blue-300">LUMINARIX</a>
             <div class="space-x-6">
-                <a href="{{ url_for('upload_file') }}" class="text-gray-300 nav-link">Upload</a>
+                <a href="{{ url_for('upload_file') }}" class="text-gray-300 nav-link">Upload Report</a>
                 <a href="{{ url_for('dashboard') }}" class="text-gray-300 nav-link">Dashboard</a>
-                <a href="{{ url_for('virtual_clinic') }}" class="text-gray-300 nav-link">Virtual Clinic</a>
-                <a href="{{ url_for('drug_lab') }}" class="text-gray-300 nav-link">Drug Lab</a>
-                <a href="{{ url_for('patient_portal') }}" class="text-gray-300 nav-link">Patient Portal</a>
-                <a href="{{ url_for('visualization') }}" class="text-gray-300 nav-link">Visualization</a>
-                <a href="{{ url_for('report') }}" class="text-gray-300 nav-link">Report</a>
+                <a href="{{ url_for('visualization') }}" class="text-gray-300 nav-link">Molecular Viewer</a>
+                <a href="{{ url_for('report') }}" class="text-gray-300 nav-link">Clinical Report</a>
                 <a href="{{ url_for('about') }}" class="text-gray-300 nav-link">About</a>
             </div>
         </div>
     </nav>
-    <main class="max-w-7xl mx-auto py-20 px-4">
+    <main class="max-w-7xl mx-auto py-24 px-4">
         {% with messages = get_flashed_messages() %}
             {% if messages %}
                 {% for message in messages %}

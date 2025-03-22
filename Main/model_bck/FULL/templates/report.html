@@ -1,10 +1,10 @@
 {% extends "base.html" %}
-{% block title %}Treatment Report - LUMINARIX{% endblock %}
+{% block title %}Clinical Report - LUMINARIX{% endblock %}
 {% block content %}
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div class="card col-span-2">
-            <h1 class="text-4xl font-bold text-blue-300 mb-6">Treatment Report</h1>
-            <p class="text-lg"><strong class="text-blue-400">Recommended Treatment:</strong> <span class="highlight">{{ drug }}</span> (Mood: {{ mood|capitalize }})</p>
+            <h1 class="text-5xl font-bold text-blue-300 mb-6">Clinical Report</h1>
+            <p class="text-lg"><strong class="text-blue-400">Recommended Drug:</strong> <span class="highlight">{{ drug }}</span> (Mood: {{ mood|capitalize }})</p>
             <p class="text-sm text-gray-300 mb-8"><strong>SMILES Code:</strong> {{ smiles }}</p>
 
             <h2 class="text-2xl font-semibold text-gray-200 mt-6 mb-4">Treatment Trajectory</h2>
@@ -27,44 +27,8 @@
             </div>
         </div>
 
-        <div class="card">
-            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Drug Efficacy Analysis</h2>
-            {% if drug_plot %}
-                <img src="data:image/png;base64,{{ drug_plot }}" alt="Drug Effects Plot" class="rounded-lg w-full border border-blue-300/30">
-            {% else %}
-                <p class="text-gray-400">Efficacy data unavailable.</p>
-            {% endif %}
-            <a href="{{ url_for('download_drug_effects') }}" class="button mt-6 inline-block">Download</a>
-        </div>
-
-        <div class="card">
-            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Molecular Structure: {{ drug }}</h2>
-            {% if drug_structure_plot %}
-                <img src="data:image/png;base64,{{ drug_structure_plot }}" alt="Drug Structure Plot" class="rounded-lg w-full border border-blue-300/30">
-                <button onclick="alert('3D visualization activated: {{ drug }} structure displayed')" class="button mt-6 w-full">View in 3D</button>
-            {% else %}
-                <p class="text-gray-400">No structure data for {{ drug }}.</p>
-            {% endif %}
-            <a href="{{ url_for('download_drug_structure') }}" class="button mt-6 inline-block">Download</a>
-        </div>
-
         <div class="card col-span-2">
-            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Drug Interaction Network</h2>
-            <div class="flex justify-center">
-                <svg width="400" height="200" class="bg-gray-900/50 rounded-lg border border-blue-300/30">
-                    <circle cx="200" cy="100" r="12" fill="#00D4FF" class="animate-pulse" />
-                    <circle cx="250" cy="50" r="8" fill="#FF007A" />
-                    <circle cx="150" cy="150" r="8" fill="#7B00FF" />
-                    <line x1="200" y1="100" x2="250" y2="50" stroke="#00D4FF" stroke-width="1" stroke-dasharray="5 5" />
-                    <line x1="200" y1="100" x2="150" y2="150" stroke="#00D4FF" stroke-width="1" stroke-dasharray="5 5" />
-                    <text x="205" y="105" fill="white" font-size="14" font-weight="700">{{ drug }}</text>
-                </svg>
-            </div>
-            <p class="text-gray-400 text-center mt-2">Visualizing <span class="highlight">drug interactions</span>.</p>
-        </div>
-
-        <div class="card col-span-2">
-            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Treatment Data Overview</h2>
+            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Blood Biomarker Analysis</h2>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
@@ -116,7 +80,7 @@
         </div>
 
         <div class="card">
-            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Clinical Insights</h2>
+            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Clinical Decision Support</h2>
             {% if insights %}
                 <ul class="list-disc pl-6">
                     {% for insight in insights %}
@@ -127,22 +91,6 @@
                 <p class="text-gray-400">No insights available.</p>
             {% endif %}
             <button onclick="alert('Voice insights: {{ insights|join(\', \') }}')" class="button mt-6 w-full">Voice Insights</button>
-        </div>
-
-        <div class="card">
-            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Symptom Analysis</h2>
-            <form method="post" class="space-y-4">
-                <label for="symptoms" class="block text-gray-200 font-semibold">Symptoms:</label>
-                <input type="text" id="symptoms" name="symptoms" value="{{ symptoms }}" placeholder="e.g., fever, fatigue" class="w-full p-3 border rounded-lg bg-gray-800/50 text-gray-200 border-gray-700 hover:border-blue-300 transition-all">
-                <button type="submit" class="button w-full">Analyze Symptoms</button>
-            </form>
-            {% if symptom_results %}
-                <ul class="list-disc pl-6 mt-4">
-                    {% for result in symptom_results %}
-                        <li class="text-gray-300">{{ result }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
         </div>
 
         <div class="card">
@@ -159,7 +107,7 @@
             <h2 class="text-2xl font-semibold text-gray-200 mb-4">Interaction Check</h2>
             <form method="post" class="space-y-4">
                 <label for="current_meds" class="block text-gray-200 font-semibold">Current Medications:</label>
-                <input type="text" id="current_meds" name="current_meds" value="{{ current_meds }}" placeholder="e.g., Aspirin, Metformin" class="w-full p-3 border rounded-lg bg-gray-800/50 text-gray-200 border-gray-700 hover:border-blue-300 transition-all">
+                <input type="text" id="current_meds" name="current_meds" value="{{ current_meds }}" placeholder="e.g., Aspirin, Metformin" class="w-full p-3 border rounded-lg bg-gray-800/50 text-gray-200 border-gray-700 hover:border-blue-300 transition-all shadow-lg hover:shadow-blue-300/50">
                 <button type="submit" class="button w-full">Check Interactions</button>
             </form>
             {% if interaction_alerts %}
@@ -172,16 +120,6 @@
         </div>
 
         <div class="card">
-            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Drug Synergy Analysis</h2>
-            <form method="post">
-                <button type="submit" name="quantum_synergy" value="true" class="button w-full">Analyze Synergy</button>
-            </form>
-            {% if synergy_prediction %}
-                <p class="text-gray-300 mt-4"><span class="highlight">{{ synergy_prediction }}</span></p>
-            {% endif %}
-        </div>
-
-        <div class="card">
             <h2 class="text-2xl font-semibold text-gray-200 mb-4">Treatment Timeline</h2>
             <input type="range" min="1" max="10" value="5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer" style="accent-color: #00D4FF;" oninput="this.nextElementSibling.innerText = 'Step: ' + this.value">
             <p class="text-gray-300 mt-2">Step: 5</p>
@@ -189,14 +127,13 @@
 
         <div class="card col-span-2">
             <h2 class="text-2xl font-semibold text-gray-200 mb-4">Export Options</h2>
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <a href="{{ url_for('download_trajectory') }}" class="button text-center">Download Trajectory</a>
                 <a href="{{ url_for('download_drug_effects') }}" class="button text-center">Download Efficacy</a>
                 <a href="{{ url_for('download_drug_structure') }}" class="button text-center">Download Structure</a>
                 <a href="{{ url_for('download_timeline') }}" class="button text-center">Export Timeline</a>
-                <button onclick="alert('Voice command: Report exported')" class="button">Voice Export</button>
             </div>
-            <a href="{{ url_for('upload_file') }}" class="button mt-6 inline-block">New Patient Data</a>
+            <a href="{{ url_for('upload_file') }}" class="button mt-6 inline-block">Upload New Report</a>
         </div>
     </div>
 {% endblock %}
