@@ -1,35 +1,44 @@
 {% extends "base.html" %}
-{% block title %}Data Visualization - LUMINARIX{% endblock %}
+{% block title %}Molecular Viewer - LUMINARIX{% endblock %}
 {% block content %}
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div class="card col-span-2">
-            <h1 class="text-4xl font-bold text-blue-300 mb-6">Clinical Data Visualization</h1>
-            <p class="text-gray-300 mb-8">Explore <span class="highlight">drug efficacy</span> and molecular structures for informed decisions.</p>
+            <h1 class="text-4xl font-bold text-gray-200 mb-4">Molecular Viewer</h1>
+            <p class="text-gray-300 mb-6">Visualize the <span class="highlight">3D structure</span> of the recommended drug: <span class="highlight">{{ drug_name }}</span>.</p>
         </div>
 
         <div class="card">
-            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Drug Efficacy Analysis</h2>
+            <h2 class="text-xl font-medium text-gray-200 mb-2">3D Structure: {{ drug_name }}</h2>
+            <div class="flex justify-center items-center h-48">
+                <!-- Minimal 3D Molecular Structure -->
+                <div class="w-32 h-32">
+                    <svg viewBox="0 0 100 100" class="animate-spin-slow">
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="#66D9EF" stroke-width="2" stroke-dasharray="10 5" />
+                        <circle cx="50" cy="50" r="20" fill="none" stroke="#A3BFFA" stroke-width="2" stroke-dasharray="5 3" />
+                        <circle cx="50" cy="50" r="10" fill="#66D9EF" opacity="0.2" />
+                    </svg>
+                </div>
+            </div>
+            <div class="text-center">
+                <button onclick="alert('Zooming into {{ drug_name }}...')" class="button mt-4">Zoom</button>
+                <a href="{{ url_for('download_drug_structure') }}" class="button mt-2 inline-block">Download</a>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="text-xl font-medium text-gray-200 mb-2">Drug Efficacy</h2>
             {% if drug_plot %}
-                <img src="data:image/png;base64,{{ drug_plot }}" alt="Drug Effects" class="rounded-lg w-full border border-blue-300/30">
+                <img src="data:image/png;base64,{{ drug_plot }}" alt="Drug Effects" class="rounded-lg w-full border border-gray-600">
             {% else %}
-                <p class="text-gray-400">Efficacy data unavailable.</p>
+                <p class="text-gray-400">Data unavailable.</p>
             {% endif %}
-            <a href="{{ url_for('download_drug_effects') }}" class="button mt-6 inline-block">Download Analysis</a>
-        </div>
-
-        <div class="card">
-            <h2 class="text-2xl font-semibold text-gray-200 mb-4">Molecular Structure: {{ drug_name }}</h2>
-            {% if drug_structure_plot %}
-                <img src="data:image/png;base64,{{ drug_structure_plot }}" alt="Drug Structure Plot" class="rounded-lg w-full border border-blue-300/30">
-                <button onclick="alert('3D visualization activated: {{ drug_name }} structure displayed')" class="button mt-6 w-full">View in 3D</button>
-            {% else %}
-                <p class="text-gray-400">No structure data for {{ drug_name }}.</p>
-            {% endif %}
-            <a href="{{ url_for('download_drug_structure') }}" class="button mt-6 inline-block">Download Structure</a>
+            <div class="text-center">
+                <a href="{{ url_for('download_drug_effects') }}" class="button mt-4">Download</a>
+            </div>
         </div>
 
         <div class="card col-span-2 flex justify-center">
-            <a href="{{ url_for('upload_file') }}" class="button">Return to Upload</a>
+            <a href="{{ url_for('report') }}" class="button">View Report</a>
         </div>
     </div>
 {% endblock %}

@@ -1,0 +1,51 @@
+LUMINARIX Blood Report Analysis
+Generated on: March 22, 2025
+
+Patient Information:
+- Name: John Doe
+- Age: 45
+- Gender: Male
+- Patient ID: JD-2025-001
+- Date of Sample Collection: March 20, 2025
+- Referring Physician: Dr. Emily Carter
+
+Blood Test Results:
+
+1. Complete Blood Count (CBC):
+   - Hemoglobin (Hb): 13.8 g/dL (Normal Range: 13.5-17.5 g/dL)
+   - White Blood Cell Count (WBC): 7.2 x 10^3/uL (Normal Range: 4.0-11.0 x 10^3/uL)
+   - Red Blood Cell Count (RBC): 4.9 x 10^6/uL (Normal Range: 4.5-5.9 x 10^6/uL)
+   - Platelet Count: 280 x 10^3/uL (Normal Range: 150-450 x 10^3/uL)
+
+2. Metabolic Panel:
+   - Glucose (Fasting): 110 mg/dL (Normal Range: 70-99 mg/dL) [Elevated]
+   - Sodium (Na): 140 mmol/L (Normal Range: 135-145 mmol/L)
+   - Potassium (K): 4.2 mmol/L (Normal Range: 3.5-5.0 mmol/L)
+   - Creatinine: 0.9 mg/dL (Normal Range: 0.6-1.2 mg/dL)
+
+3. Lipid Profile:
+   - Total Cholesterol: 210 mg/dL (Normal Range: <200 mg/dL) [Elevated]
+   - LDL Cholesterol: 130 mg/dL (Normal Range: <100 mg/dL) [Elevated]
+   - HDL Cholesterol: 45 mg/dL (Normal Range: >40 mg/dL)
+   - Triglycerides: 160 mg/dL (Normal Range: <150 mg/dL) [Elevated]
+
+4. Liver Function Tests (LFT):
+   - Alanine Aminotransferase (ALT): 35 U/L (Normal Range: 10-40 U/L)
+   - Aspartate Aminotransferase (AST): 28 U/L (Normal Range: 10-40 U/L)
+   - Bilirubin (Total): 0.8 mg/dL (Normal Range: 0.1-1.2 mg/dL)
+
+5. Additional Markers:
+   - C-Reactive Protein (CRP): 5.2 mg/L (Normal Range: <3.0 mg/L) [Elevated]
+   - Hemoglobin A1c (HbA1c): 6.2% (Normal Range: 4.0-5.6%) [Elevated]
+
+Notes:
+- Patient shows signs of prediabetes (elevated glucose and HbA1c).
+- Elevated lipid levels indicate a risk of cardiovascular disease.
+- Mild inflammation detected (elevated CRP).
+
+Physician Comments:
+- Recommend lifestyle modifications to address prediabetes and lipid levels.
+- Consider initiating a statin for cholesterol management.
+- Follow-up with an oral glucose tolerance test (OGTT) to confirm prediabetes diagnosis.
+
+End of Report
