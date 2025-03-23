@@ -59,6 +59,15 @@
             color: #66D9EF;
             font-weight: 700;
         }
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            color: #EF4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
         @keyframes spin-slow {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -85,7 +94,7 @@
         {% with messages = get_flashed_messages() %}
             {% if messages %}
                 {% for message in messages %}
-                    <div class="bg-red-500/20 text-red-300 p-4 rounded-lg mb-6 border border-red-500/40">{{ message }}</div>
+                    <div class="error-message">{{ message }}</div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
